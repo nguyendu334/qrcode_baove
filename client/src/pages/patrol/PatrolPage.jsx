@@ -11,6 +11,8 @@ import {
   Typography,
 } from "@mui/material";
 
+import { useTranslation } from "react-i18next";
+
 import { CheckCircle, LocationOn } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -30,6 +32,8 @@ export default function PatrolPage() {
   const [checking, setChecking] = useState(false);
   const [success, setSuccess] = useState(false);
   const [message, setMessage] = useState("");
+
+  const { t } = useTranslation();
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/immutability
@@ -175,7 +179,7 @@ export default function PatrolPage() {
               fontWeight={800}
               sx={{ fontSize: "1.1rem", color: "text.primary" }}
             >
-              Chấm điểm tuần tra
+              {t("patrol.patrol")}
             </Typography>
           </Box>
 
@@ -222,7 +226,7 @@ export default function PatrolPage() {
                 color="text.secondary"
                 sx={{ mt: 0.5 }}
               >
-                Khu vực: <b>{point.area}</b>
+                 {t("patrol.area")}: <b>{point.area}</b>
               </Typography>
             )}
 
@@ -256,7 +260,7 @@ export default function PatrolPage() {
               fontSize: "0.8rem",
             }}
           >
-            Tên bảo vệ:
+             {t("patrol.guard_name")}:
           </Typography>
 
           <Select
@@ -286,7 +290,7 @@ export default function PatrolPage() {
 
           <TextField
             fullWidth
-            label="Nhập ghi chú nếu có sự cố bất thường..."
+            label= {t("patrol.note_placeholder")}
             multiline
             rows={4}
             value={note}
@@ -324,7 +328,7 @@ export default function PatrolPage() {
               ? "Đang xác nhận..."
               : success
                 ? "Đã xác nhận thành công ✓"
-                : "Xác nhận tuần tra"}
+                :  t("patrol.confirm_patrol")}
           </Button>
 
           {/* Thông báo API */}
@@ -342,7 +346,6 @@ export default function PatrolPage() {
               {message}
             </Typography>
           )}
-          
         </CardContent>
       </Card>
     </Box>

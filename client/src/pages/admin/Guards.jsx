@@ -18,6 +18,7 @@ import {
 import { Add, Delete, Edit } from "@mui/icons-material";
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import api from "../../services/api";
 
@@ -31,6 +32,8 @@ export default function Guards() {
   const [open, setOpen] = useState(false);
 
   const [editingGuard, setEditingGuard] = useState(null);
+
+  const { t } = useTranslation();
 
   const loadGuards = async () => {
     try {
@@ -83,11 +86,11 @@ export default function Guards() {
       >
         <Box>
           <Typography variant="h4" fontWeight={800}>
-            Quản lý bảo vệ
+            {t("guard_management.title")}
           </Typography>
 
           <Typography color="text.secondary">
-            Danh sách nhân viên bảo vệ
+            {t("guard_management.subtitle")}
           </Typography>
         </Box>
 
@@ -100,7 +103,7 @@ export default function Guards() {
             setOpen(true);
           }}
         >
-          Thêm bảo vệ
+          {t("guard_management.add_guard")}
         </Button>
       </Box>
 
@@ -122,15 +125,15 @@ export default function Guards() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Mã</TableCell>
+                  <TableCell>{t("guard_management.guard_code")}</TableCell>
 
-                  <TableCell>Họ tên</TableCell>
+                  <TableCell>{t("guard_management.full_name")}</TableCell>
 
-                  <TableCell>Điện thoại</TableCell>
+                  <TableCell>{t("guard_management.phone")}</TableCell>
 
-                  <TableCell>Trạng thái</TableCell>
+                  <TableCell>{t("guard_management.status")}</TableCell>
 
-                  <TableCell align="right">Thao tác</TableCell>
+                  <TableCell align="right">{t("guard_management.actions")}</TableCell>
                 </TableRow>
               </TableHead>
 

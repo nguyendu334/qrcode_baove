@@ -17,6 +17,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+import { useTranslation } from "react-i18next";
+
 import { useEffect, useState } from "react";
 
 import api from "../../services/api";
@@ -28,10 +30,12 @@ export default function MonthlyHistory() {
 
   const [data, setData] = useState([]);
 
+  const { t } = useTranslation();
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/immutability
     loadData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [month]);
 
   const loadData = async () => {
@@ -79,11 +83,11 @@ export default function MonthlyHistory() {
       >
         <Box>
           <Typography variant="h4" fontWeight={800}>
-            Thống kê theo tháng
+            {t("monthly_stats.title")}
           </Typography>
 
           <Typography color="text.secondary">
-            Tổng hợp hoạt động tuần tra
+            {t("monthly_stats.subtitle")}
           </Typography>
         </Box>
 
@@ -105,7 +109,9 @@ export default function MonthlyHistory() {
             }}
           >
             <CardContent>
-              <Typography color="text.secondary">Tổng lượt tuần tra</Typography>
+              <Typography color="text.secondary">
+                {t("monthly_stats.total_patrols")}
+              </Typography>
 
               <Typography variant="h3" fontWeight={800}>
                 {totalChecks}
@@ -121,7 +127,9 @@ export default function MonthlyHistory() {
             }}
           >
             <CardContent>
-              <Typography color="text.secondary">Ngày có tuần tra</Typography>
+              <Typography color="text.secondary">
+                {t("monthly_stats.active_days")}
+              </Typography>
 
               <Typography variant="h3" fontWeight={800}>
                 {activeDays}
@@ -137,7 +145,9 @@ export default function MonthlyHistory() {
             }}
           >
             <CardContent>
-              <Typography color="text.secondary">Trung bình / ngày</Typography>
+              <Typography color="text.secondary">
+                {t("monthly_stats.daily_average")}
+              </Typography>
 
               <Typography variant="h3" fontWeight={800}>
                 {average}
@@ -155,7 +165,7 @@ export default function MonthlyHistory() {
       >
         <CardContent>
           <Typography variant="h6" fontWeight={700} mb={3}>
-            Số lượt tuần tra từng ngày
+            {t("monthly_stats.daily_chart_title")}
           </Typography>
 
           <Box

@@ -13,6 +13,8 @@ import {
   Divider,
   Stack,
   alpha,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 
 import {
@@ -26,21 +28,44 @@ import {
   Logout,
 } from "@mui/icons-material";
 
+import LanguageIcon from "@mui/icons-material/Language";
+
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
+
+import { useTranslation } from "react-i18next";
+import { useState } from "react";
 
 const drawerWidth = 260;
 
 const menu = [
-  { text: "Tổng quan", icon: <DashboardRounded />, path: "/" },
-  { text: "Điểm tuần tra", icon: <LocationOnRounded />, path: "/points" },
-  { text: "Bảo vệ", icon: <GroupsRounded />, path: "/guards" },
-  { text: "Lịch sử tuần tra", icon: <HistoryRounded />, path: "/history" },
-  { text: "Thống kê tháng", icon: <BarChartRounded />, path: "/monthly" },
+  { text: "sidebar.dashboard", icon: <DashboardRounded />, path: "/" },
+  { text: "sidebar.point", icon: <LocationOnRounded />, path: "/points" },
+  { text: "sidebar.guard", icon: <GroupsRounded />, path: "/guards" },
+  { text: "sidebar.history", icon: <HistoryRounded />, path: "/history" },
+  { text: "sidebar.month", icon: <BarChartRounded />, path: "/monthly" },
 ];
 
 export default function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+
+  const { i18n, t } = useTranslation();
+
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const changeLanguage = (lang) => {
+    i18n.changeLanguage(lang);
+    handleClose();
+  };
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#f8fafc" }}>
@@ -82,7 +107,7 @@ export default function AdminLayout() {
                 PATROL
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Hệ thống giám sát
+                {t("sidebar.system")}
               </Typography>
             </Box>
           </Stack>
@@ -122,7 +147,7 @@ export default function AdminLayout() {
                   {item.icon}
                 </ListItemIcon>
                 <ListItemText
-                  primary={item.text}
+                  primary={t(item.text)}
                   primaryTypographyProps={{
                     fontSize: "0.925rem",
                     fontWeight: isActive ? 700 : 500,
@@ -179,11 +204,51 @@ export default function AdminLayout() {
         >
           <Toolbar sx={{ justifyContent: "space-between" }}>
             <Typography variant="h6" fontWeight={700} color="text.primary">
-              {menu.find((m) => m.path === location.pathname)?.text ||
-                "Bảng điều khiển"}
+              {t(
+                menu.find((m) => m.path === location.pathname)?.text ||
+                  "Bảng điều khiển",
+              )}
             </Typography>
 
             <Stack direction="row" spacing={1}>
+              <IconButton color="inherit" onClick={handleClick} size="small">
+                <LanguageIcon fontSize="small" />
+              </IconButton>
+
+              <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
+                <MenuItem
+                  selected={i18n.language === "vi"}
+                  onClick={() => changeLanguage("vi")}
+                >
+                  <ListItemIcon>🇻🇳</ListItemIcon>
+                  <ListItemText>Tiếng Việt</ListItemText>
+                </MenuItem>
+
+                <MenuItem
+                  selected={i18n.language === "en"}
+                  onClick={() => changeLanguage("en")}
+                >
+                  <ListItemIcon>🇺🇸</ListItemIcon>
+                  <ListItemText>English</ListItemText>
+                </MenuItem>
+
+                <MenuItem
+                  selected={i18n.language === "ko"}
+                  onClick={() => changeLanguage("ko")}
+                >
+                  <ListItemIcon>🇰🇷</ListItemIcon>
+                  <ListItemText>한국어</ListItemText>
+                </MenuItem>
+
+                <MenuItem
+                  selected={i18n.language === "zh"}
+                  onClick={() => changeLanguage("zh")}
+                >
+                  <ListItemIcon>🇨🇳</ListItemIcon>
+                  <ListItemText>中文</ListItemText>
+                </MenuItem>
+              </Menu>
+
               <IconButton color="inherit">
                 <NotificationsNone />
               </IconButton>

@@ -27,6 +27,8 @@ import {
   LocationOffRounded,
 } from "@mui/icons-material";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+
 import api from "../../services/api";
 import PointDialog from "../../components/PointDialog";
 import QRDialog from "../../components/QRDialog";
@@ -37,6 +39,8 @@ export default function PatrolPoints() {
   const [openDialog, setOpenDialog] = useState(false);
   const [editingPoint, setEditingPoint] = useState(null);
   const [qrPoint, setQrPoint] = useState(null);
+
+  const { t } = useTranslation();
 
   const loadPoints = async () => {
     try {
@@ -103,10 +107,10 @@ export default function PatrolPoints() {
       >
         <Box>
           <Typography variant="h5" fontWeight={800} color="text.primary">
-            Điểm tuần tra
+            {t("point_management.title")}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Quản lý các điểm có mã QR
+            {t("point_management.subtitle")}
           </Typography>
         </Box>
 
@@ -124,7 +128,7 @@ export default function PatrolPoints() {
             "&:hover": { boxShadow: "0 4px 12px rgba(25, 118, 210, 0.25)" },
           }}
         >
-          Thêm điểm
+          {t("point_management.add_point")}
         </Button>
       </Box>
 
@@ -167,22 +171,22 @@ export default function PatrolPoints() {
               <TableHead sx={{ bgcolor: "#f8fafc" }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>
-                    Mã điểm
+                    {t("point_management.point_code")}
                   </TableCell>
                   <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>
-                    Tên điểm
+                    {t("point_management.point_name")}
                   </TableCell>
                   <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>
-                    Khu vực
+                    {t("point_management.area")}
                   </TableCell>
                   <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>
-                    Trạng thái
+                    {t("point_management.status")}
                   </TableCell>
                   <TableCell
                     align="right"
                     sx={{ fontWeight: 700, color: "text.secondary" }}
                   >
-                    Thao tác
+                    {t("point_management.actions")}
                   </TableCell>
                 </TableRow>
               </TableHead>

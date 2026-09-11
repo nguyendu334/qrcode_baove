@@ -15,6 +15,8 @@ import {
   Typography,
 } from "@mui/material";
 
+import { useTranslation } from "react-i18next";
+
 function formatVietnamTime(value) {
   if (!value) return "--:--";
 
@@ -36,6 +38,8 @@ function formatVietnamTime(value) {
 }
 
 export function ContentCard({ data }) {
+  const { t } = useTranslation();
+
   const completedCount = data.points.filter((point) => point.checked).length;
 
   return (
@@ -51,10 +55,11 @@ export function ContentCard({ data }) {
       <CardContent sx={{ p: 3 }}>
         <Box sx={{ mb: 2.5 }}>
           <Typography variant="h6" fontWeight={800}>
-            Điểm đã tuần tra ({completedCount}/{data.points.length})
+            {t("dashboard.patrolled_points")} ({completedCount}/
+            {data.points.length})
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.3 }}>
-            Các điểm đã tuần tra trong vòng hiện tại
+            {t("dashboard.patrolled_points_desc")}
           </Typography>
         </Box>
 
@@ -157,7 +162,8 @@ export function ContentCard({ data }) {
                         lineHeight: 1.2,
                       }}
                     >
-                      Khu vực: <strong>{point.area || "Chưa xác định"}</strong>
+                      {t("dashboard.area")}:{" "}
+                      <strong>{point.area || "Chưa xác định"}</strong>
                     </Typography>
 
                     {/* BẢO VỆ + THỜI GIAN */}
@@ -211,7 +217,11 @@ export function ContentCard({ data }) {
                   {/* TRẠNG THÁI */}
                   <Chip
                     size="small"
-                    label={checked ? "Đã tuần" : "Chưa tuần"}
+                    label={
+                      checked
+                        ? t("dashboard.patrolled")
+                        : t("dashboard.unpatrolled")
+                    }
                     color={checked ? "success" : "warning"}
                     variant={checked ? "filled" : "outlined"}
                     icon={

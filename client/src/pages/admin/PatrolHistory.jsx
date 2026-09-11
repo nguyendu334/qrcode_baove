@@ -37,6 +37,8 @@ import {
   WifiRounded,
 } from "@mui/icons-material";
 
+import { useTranslation } from "react-i18next";
+
 import api from "../../services/api";
 
 /* =========================================================
@@ -158,6 +160,8 @@ export default function PatrolHistory() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
+  const { t } = useTranslation();
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/immutability
     loadFilters();
@@ -263,10 +267,10 @@ export default function PatrolHistory() {
       {/* HEADER */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="h5" fontWeight={700} color="#0f172a">
-          Lịch sử tuần tra
+          {t("patrol_history.title")}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          Theo dõi và tra cứu các lượt xác nhận tuần tra của bảo vệ
+          {t("patrol_history.subtitle")}
         </Typography>
       </Box>
 
@@ -274,21 +278,21 @@ export default function PatrolHistory() {
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={4} md={3}>
           <HistoryStatCard
-            title="Tổng lượt tuần tra"
+            title={t("patrol_history.total_patrols")}
             value={statistics.total}
             color="success"
           />
         </Grid>
         <Grid item xs={12} sm={4} md={3}>
           <HistoryStatCard
-            title="Bảo vệ tham gia"
+            title={t("patrol_history.active_guards")}
             value={statistics.guards}
             color="info"
           />
         </Grid>
         <Grid item xs={12} sm={4} md={3}>
           <HistoryStatCard
-            title="Điểm đã kiểm tra"
+            title={t("patrol_history.check_points")}
             value={statistics.points}
             color="primary"
           />
@@ -326,10 +330,10 @@ export default function PatrolHistory() {
             </Avatar>
             <Box>
               <Typography fontWeight={600} variant="body1">
-                Bộ lọc lịch sử
+                {t("patrol_history.filter_title")}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Chọn điều kiện để tra cứu lượt tuần tra
+                {t("patrol_history.filter_subtitle")}
               </Typography>
             </Box>
           </Stack>
@@ -341,7 +345,7 @@ export default function PatrolHistory() {
                 fullWidth
                 size="small"
                 type="date"
-                label="Ngày"
+                label={t("patrol_history.date")}
                 value={date}
                 onChange={(e) => {
                   setDate(e.target.value);
@@ -353,17 +357,17 @@ export default function PatrolHistory() {
 
             <Grid item xs={12} sm={6} md={3}>
               <FormControl fullWidth size="small" disabled={filterLoading}>
-                <InputLabel>Bảo vệ</InputLabel>
+                <InputLabel>{t("patrol_history.guard")}</InputLabel>
                 <Select
                   value={guardId}
-                  label="Bảo vệ"
+                  label={t("patrol_history.guard")}
                   onChange={(e) => {
                     setGuardId(e.target.value);
                     setPage(0);
                   }}
                   sx={{ minWidth: 120 }}
                 >
-                  <MenuItem value="">Tất cả bảo vệ</MenuItem>
+                  <MenuItem value="">{t("patrol_history.guard")}</MenuItem>
                   {guards.map((guard) => (
                     <MenuItem key={guard.id} value={guard.id}>
                       {guard.guard_code
@@ -377,17 +381,17 @@ export default function PatrolHistory() {
 
             <Grid item xs={12} sm={6} md={3}>
               <FormControl fullWidth size="small" disabled={filterLoading}>
-                <InputLabel>Điểm tuần tra</InputLabel>
+                <InputLabel>{t("patrol_history.point")}</InputLabel>
                 <Select
                   value={pointId}
-                  label="Điểm tuần tra"
+                  label={t("patrol_history.point")}
                   onChange={(e) => {
                     setPointId(e.target.value);
                     setPage(0);
                   }}
                   sx={{ minWidth: 120 }}
                 >
-                  <MenuItem value="">Tất cả điểm</MenuItem>
+                  <MenuItem value="">{t("patrol_history.point")}</MenuItem>
                   {points.map((point) => (
                     <MenuItem key={point.id} value={point.id}>
                       {point.point_code} - {point.point_name}
@@ -401,7 +405,7 @@ export default function PatrolHistory() {
               <TextField
                 fullWidth
                 size="small"
-                label="Tìm kiếm"
+                label={t("patrol_history.search")}
                 placeholder="Tên, mã bảo vệ, điểm..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
@@ -422,7 +426,7 @@ export default function PatrolHistory() {
               onClick={handleReset}
               sx={{ textTransform: "none", fontWeight: 600 }}
             >
-              Đặt lại
+              {t("patrol_history.reset")}
             </Button>
             <Button
               variant="contained"
@@ -431,7 +435,7 @@ export default function PatrolHistory() {
               disableElevation
               sx={{ textTransform: "none", fontWeight: 600 }}
             >
-              Tìm kiếm
+              {t("patrol_history.search")}
             </Button>
           </Stack>
         </CardContent>
@@ -455,7 +459,7 @@ export default function PatrolHistory() {
             spacing={2}
           >
             <Typography variant="h6" fontWeight={700} fontSize="1.1rem">
-              Danh sách lượt tuần tra
+              {t("patrol_history.list_title")}
             </Typography>
             <Chip
               icon={<CheckCircleRounded sx={{ fontSize: "16px !important" }} />}
@@ -471,7 +475,7 @@ export default function PatrolHistory() {
             />
           </Stack>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Ngày:{" "}
+            {t("patrol_history.date")}:{" "}
             <strong>
               {date
                 ? new Date(`${date}T00:00:00`).toLocaleDateString("vi-VN")
@@ -485,14 +489,14 @@ export default function PatrolHistory() {
             <TableHead>
               <TableRow>
                 {[
-                  "Thời gian",
-                  "Bảo vệ",
-                  "Điểm tuần tra",
-                  "Khu vực",
-                  "Ghi chú",
-                  "Vòng",
-                  "Trạng thái",
-                  "Thiết bị",
+                  t("patrol_history.time"),
+                  t("patrol_history.guard"),
+                  t("patrol_history.point"),
+                  t("patrol_history.area"),
+                  t("patrol_history.note"),
+                  t("round"),
+                  t("patrol_history.status"),
+                  t("patrol_history.device"),
                 ].map((head, index) => (
                   <TableCell
                     key={index}
@@ -692,7 +696,7 @@ export default function PatrolHistory() {
                         title={
                           <Box>
                             <Typography variant="caption" display="block">
-                              Thiết bị: {item.device_info || "Không xác định"}
+                              {t("patrol_history.device")}: {item.device_info || "Không xác định"}
                             </Typography>
                             <Typography variant="caption" display="block">
                               IP: {item.ip_address || "Không xác định"}

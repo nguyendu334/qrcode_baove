@@ -34,6 +34,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+import { useTranslation } from "react-i18next";
+
 import api from "../../services/api";
 import { StatCard } from "../../components/Dashboard/StatCard";
 import { ContentCard } from "../../components/Dashboard/ContentCard";
@@ -43,6 +45,8 @@ export default function Dashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(new Date());
+
+  const { t } = useTranslation();
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/immutability
@@ -97,11 +101,11 @@ export default function Dashboard() {
       >
         <Box>
           <Typography variant="h5" fontWeight={800} color="text.primary">
-            Tổng Quan Tuần Tra
+            {t("dashboard.title")}
           </Typography>
 
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Cập nhật tiến độ và trạng thái các điểm tuần tra trong ngày
+            {t("dashboard.subtitle")}
           </Typography>
         </Box>
 
@@ -114,7 +118,7 @@ export default function Dashboard() {
                     0,
                     5,
                   )} - ${data.currentRound.end_time.slice(0, 5)}`
-                : "Không có vòng hiện tại"
+                : t("dashboard.no_active_round")
             }
             color={data.currentRound ? "primary" : "default"}
             sx={{
@@ -124,7 +128,7 @@ export default function Dashboard() {
 
           <Chip
             icon={<AutorenewRounded sx={{ fontSize: 18 }} />}
-            label={`Cập nhật ${lastUpdated.toLocaleTimeString("vi-VN")}`}
+            label={`${t("dashboard.refresh")} ${lastUpdated.toLocaleTimeString("vi-VN")}`}
             variant="outlined"
             sx={{
               fontWeight: 600,
@@ -145,41 +149,41 @@ export default function Dashboard() {
       >
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <StatCard
-            title="Điểm tuần tra"
+            title={t("dashboard.patrol_points")}
             value={data.totalPoints}
             icon={<LocationOnRounded />}
             color="primary"
-            subtext="Tổng số điểm cần trực"
+            subtext={t("dashboard.patrol_points_desc")}
           />
         </Box>
 
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <StatCard
-            title="Bảo vệ trực ca"
+            title={t("dashboard.active_guards")}
             value={data.totalGuards}
             icon={<GroupsRounded />}
             color="info"
-            subtext="Nhân sự đang hoạt động"
+            subtext={t("dashboard.active_guards_desc")}
           />
         </Box>
 
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <StatCard
-            title="Lượt đã quét"
+            title={t("dashboard.scans_count")}
             value={data.todayChecks}
             icon={<FactCheckRounded />}
             color="warning"
-            subtext="Lần quét trong ngày"
+            subtext={t("dashboard.scans_count_desc")}
           />
         </Box>
 
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <StatCard
-            title="Tỉ lệ hoàn thành"
+            title={t("dashboard.completion_rate")}
             value={`${data.completionRate}%`}
             icon={<CheckCircleRounded />}
             color={data.completionRate === 100 ? "success" : "secondary"}
-            subtext={`${completedCount}/${data.totalPoints} điểm đã xong`}
+            subtext={`${completedCount}/${data.totalPoints} ${t("dashboard.completed_points_format")}`}
           />
         </Box>
       </Box>
@@ -214,7 +218,7 @@ export default function Dashboard() {
                 color="text.secondary"
                 fontWeight={700}
               >
-                VÒNG TUẦN TRA HIỆN TẠI
+                {t("dashboard.current_patrol_round")}
               </Typography>
 
               <Typography variant="h6" fontWeight={800}>
@@ -238,7 +242,8 @@ export default function Dashboard() {
             >
               <Stack direction="row" justifyContent="space-between" mb={0.5}>
                 <Typography variant="caption" fontWeight={700}>
-                  Tiến độ vòng {data.points.filter((p) => p.checked).length}/
+                  {t("dashboard.round_progress")}{" "}
+                  {data.points.filter((p) => p.checked).length}/
                   {data.totalPoints}
                 </Typography>
               </Stack>
@@ -261,7 +266,7 @@ export default function Dashboard() {
           </Stack>
         </Paper>
       )}
-      
+
       <ContentCard data={data} />
 
       <Card
@@ -277,11 +282,12 @@ export default function Dashboard() {
           {/* Header section: Tiêu đề + Chip số lượng */}
           <Box sx={{ mb: 2.5 }}>
             <Typography variant="h6" fontWeight={800}>
-              Điểm chưa tuần tra ({data.points.filter((p) => !p.checked).length}{" "}
-              điểm)
+              {t("dashboard.unpatrolled_points")} (
+              {data.points.filter((p) => !p.checked).length}{" "}
+              {t("dashboard.point")})
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.3 }}>
-              Các điểm chưa được xác nhận trong vòng hiện tại
+              {t("dashboard.unpatrolled_points_desc")}
             </Typography>
           </Box>
 
@@ -339,7 +345,7 @@ export default function Dashboard() {
                           display="block"
                           sx={{ mt: 0.4 }}
                         >
-                          Khu vực:{" "}
+                          {t("dashboard.area")}:{" "}
                           <strong>{point.area || "Chưa xác định"}</strong>
                         </Typography>
                       </Box>
@@ -394,14 +400,14 @@ export default function Dashboard() {
             >
               <Box sx={{ mb: 2 }}>
                 <Typography variant="h6" fontWeight={800}>
-                  Lượt tuần tra theo giờ
+                  {t("dashboard.hourly_patrols")}
                 </Typography>
                 <Typography
                   variant="body2"
                   color="text.secondary"
                   sx={{ mt: 0.3 }}
                 >
-                  Số lượt xác nhận trong ngày
+                  {t("dashboard.hourly_patrols_desc")}
                 </Typography>
               </Box>
 
@@ -477,14 +483,14 @@ export default function Dashboard() {
             <CardContent sx={{ p: 3 }}>
               <Box sx={{ mb: 2.5 }}>
                 <Typography variant="h6" fontWeight={800}>
-                  Bảo vệ hôm nay
+                  {t("dashboard.today_guards")}
                 </Typography>
                 <Typography
                   variant="body2"
                   color="text.secondary"
                   sx={{ mt: 0.3 }}
                 >
-                  Số lượt xác nhận
+                  {t("dashboard.scans_label")}
                 </Typography>
               </Box>
 
@@ -539,7 +545,8 @@ export default function Dashboard() {
                           color="text.secondary"
                           display="block"
                         >
-                          Mã số: <strong>{guard.guard_code}</strong>
+                          {t("dashboard.code")}:{" "}
+                          <strong>{guard.guard_code}</strong>
                         </Typography>
                       </Box>
                     </Stack>
