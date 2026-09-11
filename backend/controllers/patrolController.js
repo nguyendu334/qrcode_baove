@@ -1,4 +1,6 @@
 const pool = require("../config/db");
+const fs = require("fs");
+const path = require("path");
 
 // =====================================================
 // CHECK PATROL
@@ -7,10 +9,28 @@ const pool = require("../config/db");
 exports.checkPatrol = async (req, res) => {
   const client = await pool.connect();
 
+  // Hàm hỗ trợ dọn dẹp file ảnh nếu request thất bại hoặc bị hủy
+  const removeUploadedFile = () => {
+    if (req.file) {
+      const filePath = path.join(__dirname, "..", req.file.path);
+      if (fs.existsSync(filePath)) {
+        try {
+          fs.unlinkSync(filePath);
+        } catch (err) {
+          console.error("Lỗi khi xóa file ảnh rác:", err);
+        }
+      }
+    }
+  };
+
   try {
     const { guard_id, patrol_point_id, note } = req.body;
 
+    // Lấy đường dẫn tĩnh phục vụ lưu trữ CSDL
+    const photo_url = req.file ? `/uploads/${req.file.filename}` : null;
+
     if (!guard_id || !patrol_point_id) {
+      removeUploadedFile();
       return res.status(400).json({
         success: false,
         message: "Thiếu thông tin bảo vệ hoặc điểm tuần tra",
@@ -22,24 +42,18 @@ exports.checkPatrol = async (req, res) => {
      * THÔNG TIN THIẾT BỊ
      * =====================================================
      */
-
-    // User-Agent của thiết bị / trình duyệt
     const deviceInfo = req.headers["user-agent"] || "Unknown";
 
-    // IP của thiết bị
     let ipAddress =
       req.headers["x-forwarded-for"] ||
       req.socket.remoteAddress ||
       req.ip ||
       null;
 
-    // Nếu x-forwarded-for có nhiều IP
-    // lấy IP đầu tiên
     if (ipAddress && ipAddress.includes(",")) {
       ipAddress = ipAddress.split(",")[0].trim();
     }
 
-    // Xử lý IPv6 localhost / IPv4-mapped IPv6
     if (ipAddress === "::1") {
       ipAddress = "127.0.0.1";
     }
@@ -47,6 +61,7 @@ exports.checkPatrol = async (req, res) => {
     if (ipAddress?.startsWith("::ffff:")) {
       ipAddress = ipAddress.replace("::ffff:", "");
     }
+
     await client.query("BEGIN");
 
     /*
@@ -54,7 +69,6 @@ exports.checkPatrol = async (req, res) => {
      * 1. KIỂM TRA BẢO VỆ
      * =====================================================
      */
-
     const guardResult = await client.query(
       `
         SELECT
@@ -70,7 +84,7 @@ exports.checkPatrol = async (req, res) => {
 
     if (guardResult.rows.length === 0) {
       await client.query("ROLLBACK");
-
+      removeUploadedFile();
       return res.status(404).json({
         success: false,
         message: "Bảo vệ không tồn tại hoặc đã bị khóa",
@@ -82,7 +96,6 @@ exports.checkPatrol = async (req, res) => {
      * 2. KIỂM TRA ĐIỂM
      * =====================================================
      */
-
     const pointResult = await client.query(
       `
         SELECT
@@ -99,7 +112,7 @@ exports.checkPatrol = async (req, res) => {
 
     if (pointResult.rows.length === 0) {
       await client.query("ROLLBACK");
-
+      removeUploadedFile();
       return res.status(404).json({
         success: false,
         message: "Điểm tuần tra không tồn tại",
@@ -111,7 +124,6 @@ exports.checkPatrol = async (req, res) => {
      * 3. XÁC ĐỊNH VÒNG HIỆN TẠI
      * =====================================================
      */
-
     const roundResult = await client.query(`
       SELECT
         id,
@@ -128,7 +140,7 @@ exports.checkPatrol = async (req, res) => {
 
     if (roundResult.rows.length === 0) {
       await client.query("ROLLBACK");
-
+      removeUploadedFile();
       return res.status(400).json({
         success: false,
         message: "Hiện tại không nằm trong thời gian tuần tra",
@@ -142,38 +154,37 @@ exports.checkPatrol = async (req, res) => {
      * 4. KIỂM TRA ĐÃ CHECK TRONG VÒNG NÀY CHƯA
      * =====================================================
      */
-
     const duplicateResult = await client.query(
       `
-    SELECT
-      pl.id,
-      pl.checked_at,
-      pl.guard_id,
-      g.guard_code,
-      g.full_name AS guard_name
-    FROM patrol_logs pl
+        SELECT
+          pl.id,
+          pl.checked_at,
+          pl.guard_id,
+          g.guard_code,
+          g.full_name AS guard_name
+        FROM patrol_logs pl
 
-    INNER JOIN guards g
-      ON g.id = pl.guard_id
+        INNER JOIN guards g
+          ON g.id = pl.guard_id
 
-    WHERE pl.patrol_point_id = $1
-      AND pl.round_id = $2
-      AND pl.checked_at::date = CURRENT_DATE
+        WHERE pl.patrol_point_id = $1
+          AND pl.round_id = $2
+          AND pl.checked_at::date = CURRENT_DATE
 
-    LIMIT 1
-  `,
+        LIMIT 1
+      `,
       [patrol_point_id, round.id],
     );
 
     if (duplicateResult.rows.length > 0) {
       await client.query("ROLLBACK");
+      removeUploadedFile(); // Xóa ảnh rác lập tức khi phát hiện bị trùng lượt check
 
       const existing = duplicateResult.rows[0];
 
       return res.status(409).json({
         success: false,
         message: "Điểm này đã được xác nhận trong vòng tuần tra hiện tại",
-
         data: {
           checked_at: existing.checked_at,
           guard_id: existing.guard_id,
@@ -186,10 +197,9 @@ exports.checkPatrol = async (req, res) => {
 
     /*
      * =====================================================
-     * 5. GHI NHẬN TUẦN TRA
+     * 5. GHI NHẬN TUẦN TRA (NẾU HỢP LỆ MỚI GIỮ ẢNH)
      * =====================================================
      */
-
     const insertResult = await client.query(
       `
         INSERT INTO patrol_logs
@@ -200,7 +210,8 @@ exports.checkPatrol = async (req, res) => {
           checked_at,
           device_info,
           ip_address,
-          note
+          note,
+          photo_url
         )
         VALUES
         (
@@ -210,7 +221,8 @@ exports.checkPatrol = async (req, res) => {
           CURRENT_TIMESTAMP,
           $4,
           $5,
-          $6
+          $6,
+          $7
         )
         RETURNING *
       `,
@@ -221,6 +233,7 @@ exports.checkPatrol = async (req, res) => {
         deviceInfo,
         ipAddress,
         note?.trim() || null,
+        photo_url,
       ],
     );
 
@@ -231,30 +244,23 @@ exports.checkPatrol = async (req, res) => {
      * 6. RESPONSE
      * =====================================================
      */
-
     res.json({
       success: true,
-
       message: "Xác nhận tuần tra thành công",
-
       data: {
         log: insertResult.rows[0],
-
         guard: guardResult.rows[0],
-
         point: pointResult.rows[0],
-
         round,
-
         device_info: deviceInfo,
-
         ip_address: ipAddress,
       },
     });
   } catch (error) {
     await client.query("ROLLBACK");
+    removeUploadedFile(); // Xóa ảnh rác nếu gặp sự cố hệ thống/CSDL
 
-    console.error("checkPatrol:", error);
+    console.error("checkPatrol error:", error);
 
     res.status(500).json({
       success: false,
@@ -379,6 +385,7 @@ exports.getHistory = async (req, res) => {
         pl.device_info,
         pl.ip_address,
         pl.note,
+        pl.photo_url,
 
         pr.id AS round_id,
         pr.round_name,

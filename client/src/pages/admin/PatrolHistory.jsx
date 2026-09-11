@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/immutability */
 import { useEffect, useMemo, useState } from "react";
 import {
   Box,
@@ -25,6 +27,7 @@ import {
   alpha,
   Tooltip,
   IconButton,
+  Dialog,
 } from "@mui/material";
 
 import {
@@ -35,15 +38,14 @@ import {
   CheckCircleRounded,
   RouteRounded,
   WifiRounded,
+  ImageNotSupportedRounded,
+  CloseRounded,
 } from "@mui/icons-material";
 
 import { useTranslation } from "react-i18next";
-
 import api from "../../services/api";
 
-/* =========================================================
-   DATE HELPERS
-========================================================= */
+const API_BASE_URL = `${window.location.protocol}//` + `${window.location.hostname}:3000`;
 
 function getVietnamToday() {
   return new Intl.DateTimeFormat("en-CA", {
@@ -79,10 +81,6 @@ function formatVietnamTime(value) {
   }).format(date);
 }
 
-/* =========================================================
-   STAT CARD
-========================================================= */
-
 function HistoryStatCard({ title, value }) {
   return (
     <Card
@@ -93,9 +91,7 @@ function HistoryStatCard({ title, value }) {
         border: "1px solid",
         borderColor: "divider",
         transition: "all 0.2s",
-        "&:hover": {
-          boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-        },
+        "&:hover": { boxShadow: "0 4px 12px rgba(0,0,0,0.05)" },
       }}
     >
       <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
@@ -123,10 +119,6 @@ function HistoryStatCard({ title, value }) {
   );
 }
 
-/* =========================================================
-   LOADING
-========================================================= */
-
 function HistorySkeleton() {
   return (
     <Stack spacing={1}>
@@ -142,10 +134,6 @@ function HistorySkeleton() {
   );
 }
 
-/* =========================================================
-   MAIN
-========================================================= */
-
 export default function PatrolHistory() {
   const [date, setDate] = useState(getVietnamToday());
   const [guardId, setGuardId] = useState("");
@@ -155,17 +143,24 @@ export default function PatrolHistory() {
   const [guards, setGuards] = useState([]);
   const [points, setPoints] = useState([]);
   const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [filterLoading, setFilterLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
+  // State quản lý xem phóng to ảnh
+  const [selectedImage, setSelectedImage] = useState(null);
+
   const { t } = useTranslation();
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/immutability
     loadFilters();
+    loadHistory(true);
   }, []);
+
+  useEffect(() => {
+    loadHistory(false);
+  }, [date, guardId, pointId, search]);
 
   const loadFilters = async () => {
     try {
@@ -183,15 +178,10 @@ export default function PatrolHistory() {
     }
   };
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/immutability
-    loadHistory();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, guardId, pointId]);
-
-  const loadHistory = async () => {
+  const loadHistory = async (isFirstTime = false) => {
     try {
-      setLoading(true);
+      if (isFirstTime) setLoading(true);
+
       const response = await api.get("/patrol/history", {
         params: {
           date: date || undefined,
@@ -213,9 +203,6 @@ export default function PatrolHistory() {
   const handleSearch = () => {
     setSearch(searchInput);
     setPage(0);
-    if (search === searchInput) {
-      loadHistory();
-    }
   };
 
   const handleReset = () => {
@@ -228,9 +215,7 @@ export default function PatrolHistory() {
   };
 
   const handleKeyDown = (event) => {
-    if (event.key === "Enter") {
-      handleSearch();
-    }
+    if (event.key === "Enter") handleSearch();
   };
 
   const statistics = useMemo(() => {
@@ -253,15 +238,6 @@ export default function PatrolHistory() {
     page * rowsPerPage + rowsPerPage,
   );
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
   return (
     <Box sx={{ pb: 4, width: "100%", bgcolor: "#f8fafc" }}>
       {/* HEADER */}
@@ -275,26 +251,23 @@ export default function PatrolHistory() {
       </Box>
 
       {/* STATISTICS */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={4} md={3}>
+      <Grid container spacing={2} sx={{ mb: 3, width: "100%" }}>
+        <Grid item xs={12} sm={4} md={4}>
           <HistoryStatCard
             title={t("patrol_history.total_patrols")}
             value={statistics.total}
-            color="success"
           />
         </Grid>
-        <Grid item xs={12} sm={4} md={3}>
+        <Grid item xs={12} sm={4} md={4}>
           <HistoryStatCard
             title={t("patrol_history.active_guards")}
             value={statistics.guards}
-            color="info"
           />
         </Grid>
-        <Grid item xs={12} sm={4} md={3}>
+        <Grid item xs={12} sm={4} md={4}>
           <HistoryStatCard
-            title={t("patrol_history.check_points")}
+            title={t("patrol_history.checked_points")}
             value={statistics.points}
-            color="primary"
           />
         </Grid>
       </Grid>
@@ -303,6 +276,7 @@ export default function PatrolHistory() {
       <Card
         elevation={0}
         sx={{
+          width: "100%",
           borderRadius: 2.5,
           border: "1px solid",
           borderColor: "divider",
@@ -338,34 +312,38 @@ export default function PatrolHistory() {
             </Box>
           </Stack>
 
-          {/* FILTER GRID */}
-          <Grid container spacing={2} sx={{ width: "100%" }}>
-            <Grid item xs={12} sm={6} md={3}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              flexWrap: "wrap",
+              gap: 2,
+              width: "100%",
+            }}
+          >
+            <Box
+              sx={{ flex: { xs: "1 1 100%", sm: "1 1 45%", md: "1 1 22%" } }}
+            >
               <TextField
                 fullWidth
                 size="small"
                 type="date"
                 label={t("patrol_history.date")}
                 value={date}
-                onChange={(e) => {
-                  setDate(e.target.value);
-                  setPage(0);
-                }}
+                onChange={(e) => setDate(e.target.value)}
                 InputLabelProps={{ shrink: true }}
               />
-            </Grid>
+            </Box>
 
-            <Grid item xs={12} sm={6} md={3}>
+            <Box
+              sx={{ flex: { xs: "1 1 100%", sm: "1 1 45%", md: "1 1 22%" } }}
+            >
               <FormControl fullWidth size="small" disabled={filterLoading}>
                 <InputLabel>{t("patrol_history.guard")}</InputLabel>
                 <Select
                   value={guardId}
                   label={t("patrol_history.guard")}
-                  onChange={(e) => {
-                    setGuardId(e.target.value);
-                    setPage(0);
-                  }}
-                  sx={{ minWidth: 120 }}
+                  onChange={(e) => setGuardId(e.target.value)}
                 >
                   <MenuItem value="">{t("patrol_history.guard")}</MenuItem>
                   {guards.map((guard) => (
@@ -377,19 +355,17 @@ export default function PatrolHistory() {
                   ))}
                 </Select>
               </FormControl>
-            </Grid>
+            </Box>
 
-            <Grid item xs={12} sm={6} md={3}>
+            <Box
+              sx={{ flex: { xs: "1 1 100%", sm: "1 1 45%", md: "1 1 22%" } }}
+            >
               <FormControl fullWidth size="small" disabled={filterLoading}>
                 <InputLabel>{t("patrol_history.point")}</InputLabel>
                 <Select
                   value={pointId}
                   label={t("patrol_history.point")}
-                  onChange={(e) => {
-                    setPointId(e.target.value);
-                    setPage(0);
-                  }}
-                  sx={{ minWidth: 120 }}
+                  onChange={(e) => setPointId(e.target.value)}
                 >
                   <MenuItem value="">{t("patrol_history.point")}</MenuItem>
                   {points.map((point) => (
@@ -399,9 +375,11 @@ export default function PatrolHistory() {
                   ))}
                 </Select>
               </FormControl>
-            </Grid>
+            </Box>
 
-            <Grid item xs={12} sm={6} md={3}>
+            <Box
+              sx={{ flex: { xs: "1 1 100%", sm: "1 1 45%", md: "1 1 22%" } }}
+            >
               <TextField
                 fullWidth
                 size="small"
@@ -411,8 +389,8 @@ export default function PatrolHistory() {
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={handleKeyDown}
               />
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
 
           <Stack
             direction="row"
@@ -441,10 +419,11 @@ export default function PatrolHistory() {
         </CardContent>
       </Card>
 
-      {/* HISTORY TABLE */}
+      {/* TABLE */}
       <Card
         elevation={0}
         sx={{
+          width: "100%",
           borderRadius: 2.5,
           border: "1px solid",
           borderColor: "divider",
@@ -474,22 +453,15 @@ export default function PatrolHistory() {
               }}
             />
           </Stack>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            {t("patrol_history.date")}:{" "}
-            <strong>
-              {date
-                ? new Date(`${date}T00:00:00`).toLocaleDateString("vi-VN")
-                : "Tất cả"}
-            </strong>
-          </Typography>
         </CardContent>
 
         <TableContainer sx={{ width: "100%", overflowX: "auto" }}>
-          <Table sx={{ minWidth: 850 }}>
+          <Table sx={{ minWidth: 900 }}>
             <TableHead>
               <TableRow>
                 {[
                   t("patrol_history.time"),
+                  "Hình ảnh",
                   t("patrol_history.guard"),
                   t("patrol_history.point"),
                   t("patrol_history.area"),
@@ -500,7 +472,7 @@ export default function PatrolHistory() {
                 ].map((head, index) => (
                   <TableCell
                     key={index}
-                    align={index >= 5 ? "center" : "left"}
+                    align={index >= 6 ? "center" : "left"}
                     sx={{
                       fontWeight: 700,
                       color: "#0f172a",
@@ -518,13 +490,13 @@ export default function PatrolHistory() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} sx={{ p: 2 }}>
+                  <TableCell colSpan={9} sx={{ p: 2 }}>
                     <HistorySkeleton />
                   </TableCell>
                 </TableRow>
               ) : paginatedHistory.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={9} align="center" sx={{ py: 8 }}>
                     <Avatar
                       sx={{
                         width: 56,
@@ -538,208 +510,273 @@ export default function PatrolHistory() {
                       <SearchRounded />
                     </Avatar>
                     <Typography fontWeight={600}>Không có dữ liệu</Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mt: 0.5 }}
-                    >
-                      Không tìm thấy lượt tuần tra phù hợp
-                    </Typography>
                   </TableCell>
                 </TableRow>
               ) : (
-                paginatedHistory.map((item) => (
-                  <TableRow
-                    key={item.id}
-                    hover
-                    sx={{ "&:last-child td": { borderBottom: 0 } }}
-                  >
-                    {/* TIME */}
-                    <TableCell sx={{ py: 1.5 }}>
-                      <Stack direction="row" spacing={1.5} alignItems="center">
-                        <Avatar
-                          sx={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: 2,
-                            bgcolor: "#e0f2fe",
-                            color: "#0284c7",
-                          }}
+                paginatedHistory.map((item) => {
+                  const imageUrl = item.photo_url
+                    ? item.photo_url.startsWith("http")
+                      ? item.photo_url
+                      : `${API_BASE_URL}${item.photo_url.startsWith("/") ? "" : "/"}${item.photo_url}`
+                    : null;
+
+                  return (
+                    <TableRow
+                      key={item.id}
+                      hover
+                      sx={{ "&:last-child td": { borderBottom: 0 } }}
+                    >
+                      <TableCell sx={{ py: 1.5 }}>
+                        <Stack
+                          direction="row"
+                          spacing={1.5}
+                          alignItems="center"
                         >
-                          <AccessTimeRounded sx={{ fontSize: 20 }} />
-                        </Avatar>
-                        <Box>
-                          <Typography
-                            fontWeight={600}
-                            fontSize="0.875rem"
-                            color="#0f172a"
+                          <Avatar
+                            sx={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: 2,
+                              bgcolor: "#e0f2fe",
+                              color: "#0284c7",
+                            }}
                           >
-                            {formatVietnamTime(item.checked_at)}
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            sx={{ display: "block" }}
+                            <AccessTimeRounded sx={{ fontSize: 20 }} />
+                          </Avatar>
+                          <Box>
+                            <Typography
+                              fontWeight={600}
+                              fontSize="0.875rem"
+                              color="#0f172a"
+                            >
+                              {formatVietnamTime(item.checked_at)}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{ display: "block" }}
+                            >
+                              {
+                                formatVietnamDateTime(item.checked_at).split(
+                                  " ",
+                                )[0]
+                              }
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </TableCell>
+
+                      {/* CỘT HÌNH ẢNH: BẤM VÀO SẼ BẬT MODAL TRÊN TRANG */}
+                      <TableCell>
+                        {imageUrl ? (
+                          <Tooltip title="Nhấn để phóng to ảnh hiện trường">
+                            <Box
+                              component="img"
+                              src={imageUrl}
+                              alt="Ảnh tuần tra"
+                              onClick={() => setSelectedImage(imageUrl)}
+                              sx={{
+                                width: 44,
+                                height: 44,
+                                objectFit: "cover",
+                                borderRadius: 2,
+                                cursor: "pointer",
+                                border: "1px solid #cbd5e1",
+                                transition: "transform 0.2s",
+                                "&:hover": { transform: "scale(1.1)" },
+                              }}
+                            />
+                          </Tooltip>
+                        ) : (
+                          <Avatar
+                            variant="rounded"
+                            sx={{
+                              width: 44,
+                              height: 44,
+                              borderRadius: 2,
+                              bgcolor: "#f1f5f9",
+                              color: "#94a3b8",
+                            }}
                           >
-                            {
-                              formatVietnamDateTime(item.checked_at).split(
-                                " ",
-                              )[0]
-                            }
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </TableCell>
+                            <ImageNotSupportedRounded fontSize="small" />
+                          </Avatar>
+                        )}
+                      </TableCell>
 
-                    {/* GUARD */}
-                    <TableCell>
-                      <Typography
-                        fontWeight={500}
-                        fontSize="0.875rem"
-                        color="#0f172a"
-                      >
-                        {item.guard_name || "-"}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {item.guard_code || "-"}
-                      </Typography>
-                    </TableCell>
-
-                    {/* POINT */}
-                    <TableCell>
-                      <Stack direction="row" spacing={1.5} alignItems="center">
-                        <Avatar
-                          sx={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: 2,
-                            bgcolor: "#e2e8f0",
-                            color: "#3b82f6",
-                          }}
+                      <TableCell>
+                        <Typography
+                          fontWeight={500}
+                          fontSize="0.875rem"
+                          color="#0f172a"
                         >
-                          <LocationOnRounded sx={{ fontSize: 20 }} />
-                        </Avatar>
-                        <Box>
-                          <Typography
-                            fontWeight={500}
-                            fontSize="0.875rem"
-                            color="#0f172a"
+                          {item.guard_name || "-"}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {item.guard_code || "-"}
+                        </Typography>
+                      </TableCell>
+
+                      <TableCell>
+                        <Stack
+                          direction="row"
+                          spacing={1.5}
+                          alignItems="center"
+                        >
+                          <Avatar
+                            sx={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: 2,
+                              bgcolor: "#e2e8f0",
+                              color: "#3b82f6",
+                            }}
                           >
-                            {item.point_name}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {item.point_code}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </TableCell>
+                            <LocationOnRounded sx={{ fontSize: 20 }} />
+                          </Avatar>
+                          <Box>
+                            <Typography
+                              fontWeight={500}
+                              fontSize="0.875rem"
+                              color="#0f172a"
+                            >
+                              {item.point_name}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              {item.point_code}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </TableCell>
 
-                    {/* AREA */}
-                    <TableCell>
-                      <Typography variant="body2" color="#334155">
-                        {item.area || "Chưa xác định"}
-                      </Typography>
-                    </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" color="#334155">
+                          {item.area || "Chưa xác định"}
+                        </Typography>
+                      </TableCell>
 
-                    {/* NOTE */}
-                    <TableCell>
-                      <Typography variant="body2" color="#334155">
-                        {item.note || "-"}
-                      </Typography>
-                    </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" color="#334155">
+                          {item.note || "-"}
+                        </Typography>
+                      </TableCell>
 
-                    {/* ROUND */}
-                    <TableCell>
-                      {item.round_name ? (
+                      <TableCell align="center">
+                        {item.round_name ? (
+                          <Chip
+                            icon={<RouteRounded />}
+                            label={item.round_name}
+                            size="small"
+                            variant="outlined"
+                            sx={{
+                              fontWeight: 600,
+                              borderRadius: 1.5,
+                              color: "#0284c7",
+                              borderColor: "#7dd3fc",
+                            }}
+                          />
+                        ) : (
+                          "-"
+                        )}
+                      </TableCell>
+
+                      <TableCell align="center">
                         <Chip
-                          icon={<RouteRounded />}
-                          label={item.round_name}
+                          icon={
+                            <CheckCircleRounded style={{ color: "white" }} />
+                          }
+                          label="Đã xác nhận"
                           size="small"
-                          variant="outlined"
                           sx={{
                             fontWeight: 600,
                             borderRadius: 1.5,
-                            color: "#0284c7",
-                            borderColor: "#7dd3fc",
-                            "& .MuiChip-icon": {
-                              fontSize: 16,
-                              color: "#0284c7",
-                            },
+                            bgcolor: "#22c55e",
+                            color: "white",
                           }}
                         />
-                      ) : (
-                        <Typography variant="body2" color="text.disabled">
-                          -
-                        </Typography>
-                      )}
-                    </TableCell>
+                      </TableCell>
 
-                    {/* STATUS */}
-                    <TableCell align="center">
-                      <Chip
-                        icon={<CheckCircleRounded style={{ color: "white" }} />}
-                        label="Đã xác nhận"
-                        size="small"
-                        sx={{
-                          fontWeight: 600,
-                          borderRadius: 1.5,
-                          bgcolor: "#22c55e",
-                          color: "white",
-                          "& .MuiChip-icon": { fontSize: 16 },
-                        }}
-                      />
-                    </TableCell>
-
-                    {/* DEVICE */}
-                    <TableCell align="center">
-                      <Tooltip
-                        title={
-                          <Box>
-                            <Typography variant="caption" display="block">
-                              {t("patrol_history.device")}: {item.device_info || "Không xác định"}
-                            </Typography>
-                            <Typography variant="caption" display="block">
-                              IP: {item.ip_address || "Không xác định"}
-                            </Typography>
-                          </Box>
-                        }
-                      >
-                        <IconButton
-                          size="small"
-                          sx={{
-                            bgcolor: "#f1f5f9",
-                            color: "#64748b",
-                            "&:hover": { bgcolor: "#e2e8f0" },
-                          }}
+                      <TableCell align="center">
+                        <Tooltip
+                          title={`IP: ${item.ip_address || "Chưa xác định"}`}
                         >
-                          <WifiRounded fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))
+                          <IconButton
+                            size="small"
+                            sx={{ bgcolor: "#f1f5f9", color: "#64748b" }}
+                          >
+                            <WifiRounded fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
         </TableContainer>
 
-        {/* PAGINATION */}
         {!loading && history.length > 0 && (
           <TablePagination
             component="div"
             count={history.length}
             page={page}
-            onPageChange={handleChangePage}
+            onPageChange={(e, n) => setPage(n)}
             rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
             rowsPerPageOptions={[10, 20, 50]}
             labelRowsPerPage="Số dòng:"
-            labelDisplayedRows={({ from, to, count }) =>
-              `${from}-${to} / ${count}`
-            }
           />
         )}
       </Card>
+
+      {/* DIALOG POPUP PHÓNG TO ẢNH TRỰC TIẾP TRÊN TRANG */}
+      <Dialog
+        open={Boolean(selectedImage)}
+        onClose={() => setSelectedImage(null)}
+        maxWidth="md"
+        PaperProps={{
+          sx: {
+            bgcolor: "transparent",
+            boxShadow: "none",
+            overflow: "hidden",
+            position: "relative",
+          },
+        }}
+      >
+        <IconButton
+          onClick={() => setSelectedImage(null)}
+          sx={{
+            position: "absolute",
+            top: 12,
+            right: 12,
+            bgcolor: "rgba(0,0,0,0.6)",
+            color: "#ffffff",
+            "&:hover": { bgcolor: "rgba(0,0,0,0.8)" },
+          }}
+        >
+          <CloseRounded />
+        </IconButton>
+        {selectedImage && (
+          <Box
+            component="img"
+            src={selectedImage}
+            alt="Ảnh phóng to"
+            sx={{
+              maxWidth: "90vw",
+              maxHeight: "85vh",
+              objectFit: "contain",
+              borderRadius: 3,
+              bgcolor: "#000000",
+            }}
+          />
+        )}
+      </Dialog>
     </Box>
   );
 }

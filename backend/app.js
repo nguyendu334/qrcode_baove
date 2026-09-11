@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
+const path = require("path");
 
 const guardRoutes = require("./routes/guardRoutes");
 
@@ -11,6 +12,8 @@ const patrolRoutes = require("./routes/patrolRoutes");
 const roundRoutes = require("./routes/roundRoutes");
 
 const app = express();
+
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.set("trust proxy", true);
 

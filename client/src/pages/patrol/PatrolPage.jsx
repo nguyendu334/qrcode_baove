@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/immutability */
 import {
   Box,
   Button,
@@ -12,10 +13,10 @@ import {
 } from "@mui/material";
 
 import { useTranslation } from "react-i18next";
-
-import { CheckCircle, LocationOn } from "@mui/icons-material";
+import { CheckCircle, LocationOn, PhotoCamera } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import imageCompression from "browser-image-compression";
 import api from "../../services/api";
 
 export default function PatrolPage() {
@@ -28,6 +29,10 @@ export default function PatrolPage() {
   const [coords, setCoords] = useState(null);
   const [note, setNote] = useState("");
 
+  // State quản lý ảnh
+  const [photo, setPhoto] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -36,9 +41,7 @@ export default function PatrolPage() {
   const { t } = useTranslation();
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/immutability
     loadData();
-    // Tự động lấy tọa độ GPS từ trình duyệt
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -50,7 +53,7 @@ export default function PatrolPage() {
         () => setCoords(null),
       );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -70,22 +73,52 @@ export default function PatrolPage() {
     }
   };
 
+  // Xử lý nén ảnh từ Camera
+  const handleCapturePhoto = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const options = {
+      maxSizeMB: 0.2, // Giới hạn kích thước tối đa 200KB
+      maxWidthOrHeight: 1024, // Giới hạn độ phân giải
+      useWebWorker: true,
+    };
+
+    try {
+      const compressedFile = await imageCompression(file, options);
+      setPhoto(compressedFile);
+      setPhotoPreview(URL.createObjectURL(compressedFile));
+    } catch (error) {
+      console.error("Lỗi nén ảnh:", error);
+    }
+  };
+
   const handleCheck = async () => {
     if (!guardId) {
       setMessage("Vui lòng chọn tên bảo vệ");
       return;
     }
 
+    if (!photo) {
+      setMessage("Vui lòng chụp ảnh tại điểm tuần tra");
+      return;
+    }
+
     setChecking(true);
     setMessage("");
 
+    // Tạo FormData chứa text + file ảnh gửi lên backend
+    const formData = new FormData();
+    formData.append("guard_id", guardId);
+    formData.append("patrol_point_id", point.id);
+    formData.append("photo", photo);
+    if (coords?.lat) formData.append("latitude", coords.lat);
+    if (coords?.lng) formData.append("longitude", coords.lng);
+    if (note.trim()) formData.append("note", note.trim());
+
     try {
-      const response = await api.post("/patrol/check", {
-        guard_id: guardId,
-        patrol_point_id: point.id,
-        latitude: coords?.lat,
-        longitude: coords?.lng,
-        note: note.trim() || null,
+      const response = await api.post("/patrol/check", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       if (response.data.success) {
@@ -226,7 +259,7 @@ export default function PatrolPage() {
                 color="text.secondary"
                 sx={{ mt: 0.5 }}
               >
-                 {t("patrol.area")}: <b>{point.area}</b>
+                {t("patrol.area")}: <b>{point.area}</b>
               </Typography>
             )}
 
@@ -260,7 +293,7 @@ export default function PatrolPage() {
               fontSize: "0.8rem",
             }}
           >
-             {t("patrol.guard_name")}:
+            {t("patrol.guard_name")}:
           </Typography>
 
           <Select
@@ -271,7 +304,7 @@ export default function PatrolPage() {
             sx={{
               borderRadius: 2.5,
               fontSize: "0.95rem",
-              mb: 3,
+              mb: 2,
               "& .MuiSelect-select": {
                 py: 1.3,
               },
@@ -288,11 +321,64 @@ export default function PatrolPage() {
             ))}
           </Select>
 
+          {/* Ô Chụp Ảnh Hiện Trường */}
+          <input
+            accept="image/*"
+            id="camera-photo-input"
+            type="file"
+            capture="environment"
+            style={{ display: "none" }}
+            onChange={handleCapturePhoto}
+          />
+          <label htmlFor="camera-photo-input">
+            <Button
+              fullWidth
+              variant="outlined"
+              component="span"
+              startIcon={<PhotoCamera />}
+              sx={{
+                mb: 2,
+                py: 1.2,
+                borderRadius: 2.5,
+                fontWeight: 600,
+                textTransform: "none",
+                borderColor: photo ? "success.main" : "primary.main",
+                color: photo ? "success.main" : "primary.main",
+              }}
+            >
+              {photo ? "📷 Chụp lại ảnh" : "📷 Chụp ảnh hiện trường (Bắt buộc)"}
+            </Button>
+          </label>
+
+          {/* Preview Ảnh */}
+          {photoPreview && (
+            <Box
+              sx={{
+                mb: 2,
+                borderRadius: 2.5,
+                overflow: "hidden",
+                border: "1px solid",
+                borderColor: "divider",
+              }}
+            >
+              <img
+                src={photoPreview}
+                alt="Xem trước ảnh tuần tra"
+                style={{
+                  width: "100%",
+                  maxHeight: 200,
+                  objectFit: "cover",
+                  display: "block",
+                }}
+              />
+            </Box>
+          )}
+
           <TextField
             fullWidth
-            label= {t("patrol.note_placeholder")}
+            label={t("patrol.note_placeholder")}
             multiline
-            rows={4}
+            rows={3}
             value={note}
             onChange={(e) => setNote(e.target.value)}
             sx={{ mb: 3 }}
@@ -302,7 +388,7 @@ export default function PatrolPage() {
           <Button
             fullWidth
             variant="contained"
-            disabled={!guardId || checking || success}
+            disabled={!guardId || !photo || checking || success}
             onClick={handleCheck}
             startIcon={
               checking ? (
@@ -328,7 +414,7 @@ export default function PatrolPage() {
               ? "Đang xác nhận..."
               : success
                 ? "Đã xác nhận thành công ✓"
-                :  t("patrol.confirm_patrol")}
+                : t("patrol.confirm_patrol")}
           </Button>
 
           {/* Thông báo API */}
