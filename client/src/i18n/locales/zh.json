@@ -5,7 +5,8 @@
     "point": "巡逻点",
     "guard": "安保人员",
     "history": "巡逻历史",
-    "month": "月度统计"
+    "month": "月度统计",
+    "round": "巡逻轮次"
   },
   "dashboard": {
     "title": "巡逻总览",
@@ -34,7 +35,11 @@
     "hourly_patrols": "分时巡逻次数",
     "hourly_patrols_desc": "当日打卡确认总数",
     "today_guards": "今日安保人员",
-    "scans_label": "打卡确认次数"
+    "scans_label": "打卡确认次数",
+    "not_in_patrol_time_title": "尚未到巡逻时间",
+    "not_in_patrol_time_desc": "当前不在任何巡逻班次的时间范围内。巡逻点将在下一班次开始时显示。",
+    "no_patrolled_points_in_round": "本轮巡逻中尚无已巡逻的地点。",
+    "round": "轮"
   },
   "point_management": {
     "title": "巡逻点",
@@ -44,7 +49,9 @@
     "point_name": "巡逻点名称",
     "area": "区域",
     "status": "状态",
-    "actions": "操作"
+    "actions": "操作",
+    "map_title": "巡逻点位置示意图",
+    "map_subtitle": "工厂巡逻路线及区域划分图"
   },
   "guard_management": {
     "title": "安保管理",
@@ -54,7 +61,8 @@
     "full_name": "姓名",
     "phone": "电话号码",
     "status": "状态",
-    "actions": "操作"
+    "actions": "操作",
+    "online": "在岗"
   },
   "patrol_history": {
     "title": "巡逻历史",
@@ -76,15 +84,35 @@
     "note": "备注",
     "round": "轮次",
     "status": "状态",
-    "device": "设备"
+    "device": "设备",
+    "picture": "图片",
+    "turn": "巡逻轮次",
+
+    "daily_incident_log": "按日期记录的异常事件列表",
+    "no_incidents_reported": "该日期暂无异常事件记录",
+    "reported_guard": "上报保安",
+    "patrol_point": "巡逻点",
+    "incident_details": "异常事件详情",
+    "contacted": "已紧急联系",
+    "images": "图片",
+    "other": "其他",
+    "none": "无"
   },
   "monthly_stats": {
-    "title": "月度统计",
-    "subtitle": "巡逻活动汇总",
+    "title": "巡逻与异常月度报告",
+    "subtitle": "按月详细统计巡逻轮次、异常列表及上报保安",
     "total_patrols": "总巡逻次数",
-    "active_days": "巡逻天数",
-    "daily_average": "日均次数",
-    "daily_chart_title": "每日巡逻次数"
+    "active_days": "活跃天数",
+    "daily_average": "日均",
+    "total_incidents": "发现异常总数",
+    "table_title": "每日异常明细表",
+    "export_excel": "导出 Excel",
+    "patrol_date": "巡逻日期",
+    "patrol_rounds": "巡逻轮次",
+    "reporting_guard": "上报保安",
+    "point_and_incidents": "巡逻点位与发生异常",
+    "safe_status": "安全（无异常）",
+    "note": "备注"
   },
   "patrol": {
     "patrol": "巡逻",
@@ -92,6 +120,71 @@
     "guard_name": "保安姓名",
     "note_placeholder": "如有异常情况，请输入备注...",
     "confirm_patrol": "确认巡逻",
-    "confirm_success": "巡逻确认成功"
+    "success_message": "巡逻确认成功！",
+    "error_message": "无法确认巡逻",
+    "select_guard": "选择保安姓名",
+    "retake_photo": "重新拍照",
+    "take_photo_required": "现场拍照（必填）",
+    "confirmed_status": "已成功确认",
+    "scene_photo": "现场照片",
+    "unusual_incident_note": "异常情况备注",
+    "camera_tap_hint": "点击打开相机并自动压缩照片",
+    "gps_disabled": "GPS已禁用",
+    "common_incidents": "常见异常事件",
+    "Rò rỉ nước / Khí thải": "漏水 / 废기",
+    "Nguy cơ cháy nổ / Khói": "火灾隐患 / 烟雾",
+    "Cửa / Khóa hỏng": "门窗 / 门锁损坏",
+    "Đèn chiếu sáng hỏng": "照明故障",
+    "Tài sản bị hỏng hóc": "财产损坏",
+    "Người lạ xuất hiện": "发现可疑人员",
+    "Sự cố khác": "其他异常",
+    "placeholder_other_description": "如有其他异常情况请输入",
+    "additional_photos": "异常事件补充照片",
+    "btn_add_photo": "添加照片",
+    "emergency_contact": "紧急联系 (无法自行处理时)",
+    "Ca ngày": "白班",
+    "Ca đêm": "夜班",
+    "current_patrol_round": "当前巡逻轮次",
+    "next_patrol_round": "下一巡逻轮次",
+    "patrol_frequency": "巡逻频次",
+    "shift_frequency_desc": "白班: 每2小时1次 - 夜班: 每1小时1次"
+  },
+  "round_management": {
+    "title": "班次 / 巡逻轮次管理",
+    "subtitle": "配置每轮巡逻的开始时间、结束时间及启用状态",
+    "add_button": "添加巡逻轮次",
+    "id": "ID",
+    "round_name": "巡逻轮次名称",
+    "start_time": "开始时间",
+    "end_time": "结束时间",
+    "status": "状态",
+    "action": "操作",
+    "modal_add_title": "添加新巡逻轮次",
+    "modal_edit_title": "编辑巡逻轮次",
+    "cancel": "取消",
+    "save": "保存修改",
+    "add": "添加",
+    "add_success": "添加新巡逻轮次成功",
+    "update_success": "更新巡逻轮次成功",
+    "load_error": "无法加载巡逻轮次列表",
+    "action_error": "操作失败",
+    "Vòng 1": "第 1 轮",
+    "Vòng 2": "第 2 轮",
+    "Vòng 3": "第 3 轮",
+    "Vòng 4": "第 4 轮",
+    "Vòng 5": "第 5 轮",
+    "Vòng 6": "第 6 轮",
+    "Vòng 7": "第 7 轮",
+    "Vòng 8": "第 8 轮",
+    "Vòng 9": "第 9 轮",
+    "Vòng 10": "第 10 轮",
+    "Vòng 11": "第 11 轮",
+    "Vòng 12": "第 12 轮",
+    "Vòng 13": "第 13 轮",
+    "Vòng 14": "第 14 轮",
+    "Vòng 15": "第 15 轮",
+    "Vòng 16": "第 16 轮",
+    "Vòng 17": "第 17 轮",
+    "Vòng 18": "第 18 轮"
   }
 }

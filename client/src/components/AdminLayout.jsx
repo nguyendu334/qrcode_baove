@@ -21,6 +21,7 @@ import {
   DashboardRounded,
   LocationOnRounded,
   GroupsRounded,
+  RoundaboutLeftRounded,
   HistoryRounded,
   BarChartRounded,
   NotificationsNone,
@@ -41,6 +42,7 @@ const menu = [
   { text: "sidebar.dashboard", icon: <DashboardRounded />, path: "/" },
   { text: "sidebar.point", icon: <LocationOnRounded />, path: "/points" },
   { text: "sidebar.guard", icon: <GroupsRounded />, path: "/guards" },
+  { text: "sidebar.round", icon: <RoundaboutLeftRounded />, path: "/rounds" },
   { text: "sidebar.history", icon: <HistoryRounded />, path: "/history" },
   { text: "sidebar.month", icon: <BarChartRounded />, path: "/monthly" },
 ];

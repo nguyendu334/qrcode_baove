@@ -5,7 +5,8 @@
     "point": "Patrol Point",
     "guard": "Guards",
     "history": "Patrol History",
-    "month": "Monthly Statistics"
+    "month": "Monthly Statistics",
+    "round": "Patrol Round"
   },
   "dashboard": {
     "title": "Patrol Overview",
@@ -34,7 +35,11 @@
     "hourly_patrols": "Hourly Patrols",
     "hourly_patrols_desc": "Number of verifications today",
     "today_guards": "Guards Today",
-    "scans_label": "Verifications count"
+    "scans_label": "Verifications count",
+    "not_in_patrol_time_title": "Outside Patrol Hours",
+    "not_in_patrol_time_desc": "Currently not within any scheduled patrol shift. Patrol checkpoints will appear when the next shift starts.",
+    "no_patrolled_points_in_round": "No points have been patrolled in this round yet.",
+    "round": "Round"
   },
   "point_management": {
     "title": "Patrol Points",
@@ -44,7 +49,9 @@
     "point_name": "Point Name",
     "area": "Area",
     "status": "Status",
-    "actions": "Actions"
+    "actions": "Actions",
+    "map_title": "Patrol Checkpoints Location Map",
+    "map_subtitle": "Factory patrol route map and zone partitioning"
   },
   "guard_management": {
     "title": "Guard Management",
@@ -54,7 +61,8 @@
     "full_name": "Full Name",
     "phone": "Phone Number",
     "status": "Status",
-    "actions": "Actions"
+    "actions": "Actions",
+    "online": "Active"
   },
   "patrol_history": {
     "title": "Patrol History",
@@ -76,15 +84,35 @@
     "note": "Note",
     "round": "Round",
     "status": "Status",
-    "device": "Device"
+    "device": "Device",
+    "picture": "Picture",
+    "turn": "Patrol Turn",
+
+    "daily_incident_log": "Daily Incident Log",
+    "no_incidents_reported": "No incidents reported for this date",
+    "reported_guard": "Reported Guard",
+    "patrol_point": "Patrol Point",
+    "incident_details": "Incident Details",
+    "contacted": "Contacted",
+    "images": "Images",
+    "other": "Other",
+    "none": "None"
   },
   "monthly_stats": {
-    "title": "Monthly Statistics",
-    "subtitle": "Summary of patrol activities",
+    "title": "Patrol & Incident Monthly Report",
+    "subtitle": "Detailed monthly summary of patrol rounds, incidents, and reporting guards",
     "total_patrols": "Total Patrols",
-    "active_days": "Active Patrol Days",
+    "active_days": "Active Days",
     "daily_average": "Daily Average",
-    "daily_chart_title": "Daily Patrol Count"
+    "total_incidents": "Total Incidents Found",
+    "table_title": "Daily Incident Breakdown",
+    "export_excel": "Export to Excel",
+    "patrol_date": "Patrol Date",
+    "patrol_rounds": "Rounds",
+    "reporting_guard": "Reporting Guard",
+    "point_and_incidents": "Patrol Point & Incidents",
+    "safe_status": "Safe (No Incidents)",
+    "note": "Note"
   },
   "patrol": {
     "patrol": "Patrol",
@@ -92,6 +120,71 @@
     "guard_name": "Guard Name",
     "note_placeholder": "Enter notes if there are unusual incidents...",
     "confirm_patrol": "Confirm Patrol",
-    "confirm_success": "Patrol confirmed successfully"
+    "success_message": "Patrol confirmed successfully!",
+    "error_message": "Unable to confirm patrol",
+    "select_guard": "Select guard name",
+    "retake_photo": "Retake photo",
+    "take_photo_required": "Take scene photo (Required)",
+    "confirmed_status": "Successfully confirmed",
+    "scene_photo": "Scene Photo",
+    "unusual_incident_note": "Unusual Incident Notes",
+    "camera_tap_hint": "Tap to open camera and auto-compress photo",
+    "gps_disabled": "GPS is disabled",
+    "common_incidents": "Common Incidents",
+    "Rò rỉ nước / Khí thải": "Water Leak / Gas Emission",
+    "Nguy cơ cháy nổ / Khói": "Fire Hazard / Smoke",
+    "Cửa / Khóa hỏng": "Damaged Door / Lock",
+    "Đèn chiếu sáng hỏng": "Faulty Lighting",
+    "Tài sản bị hỏng hóc": "Damaged Property",
+    "Người lạ xuất hiện": "Unidentified Person Detected",
+    "Sự cố khác": "Other Incident",
+    "placeholder_other_description": "Enter details of other incidents if any",
+    "additional_photos": "Additional Incident Photos",
+    "btn_add_photo": "Add Photo",
+    "emergency_contact": "Emergency Contact (If unable to handle independently)",
+    "Ca ngày": "Day Shift",
+    "Ca đêm": "Night Shift",
+    "current_patrol_round": "Current Patrol Round",
+    "next_patrol_round": "Next Patrol Round",
+    "patrol_frequency": "Patrol Frequency",
+    "shift_frequency_desc": "Day Shift: Every 2 hours - Night Shift: Every 1 hour"
+  },
+  "round_management": {
+    "title": "Shift / Patrol Round Management",
+    "subtitle": "Configure start time, end time, and active status for each patrol round",
+    "add_button": "Add Patrol Round",
+    "id": "ID",
+    "round_name": "Round Name",
+    "start_time": "Start Time",
+    "end_time": "End Time",
+    "status": "Status",
+    "action": "Action",
+    "modal_add_title": "Add New Patrol Round",
+    "modal_edit_title": "Edit Patrol Round",
+    "cancel": "Cancel",
+    "save": "Save Changes",
+    "add": "Add New",
+    "add_success": "New patrol round added successfully",
+    "update_success": "Patrol round updated successfully",
+    "load_error": "Unable to load patrol rounds list",
+    "action_error": "Operation failed",
+    "Vòng 1": "Round 1",
+    "Vòng 2": "Round 2",
+    "Vòng 3": "Round 3",
+    "Vòng 4": "Round 4",
+    "Vòng 5": "Round 5",
+    "Vòng 6": "Round 6",
+    "Vòng 7": "Round 7",
+    "Vòng 8": "Round 8",
+    "Vòng 9": "Round 9",
+    "Vòng 10": "Round 10",
+    "Vòng 11": "Round 11",
+    "Vòng 12": "Round 12",
+    "Vòng 13": "Round 13",
+    "Vòng 14": "Round 14",
+    "Vòng 15": "Round 15",
+    "Vòng 16": "Round 16",
+    "Vòng 17": "Round 17",
+    "Vòng 18": "Round 18"
   }
 }

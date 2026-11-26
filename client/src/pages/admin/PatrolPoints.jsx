@@ -3,7 +3,7 @@ import {
   Button,
   Card,
   CardContent,
-  Chip,
+  Dialog,
   IconButton,
   InputAdornment,
   Table,
@@ -25,6 +25,7 @@ import {
   QrCode2,
   Search,
   LocationOffRounded,
+  Close,
 } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -33,12 +34,17 @@ import api from "../../services/api";
 import PointDialog from "../../components/PointDialog";
 import QRDialog from "../../components/QRDialog";
 
+import patrolMapImg from "../../assets/map1.png";
+import patrolMapImg2 from "../../assets/map2.png";
+
 export default function PatrolPoints() {
   const [points, setPoints] = useState([]);
   const [search, setSearch] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
   const [editingPoint, setEditingPoint] = useState(null);
   const [qrPoint, setQrPoint] = useState(null);
+
+  const [selectedMapImg, setSelectedMapImg] = useState(null);
 
   const { t } = useTranslation();
 
@@ -69,12 +75,15 @@ export default function PatrolPoints() {
   const handleDelete = async (point) => {
     const confirmDelete = window.confirm(`Khóa điểm "${point.point_name}"?`);
 
-    if (!confirmDelete) {
-      return;
-    }
+    if (!confirmDelete) return;
 
     try {
       await api.delete(`/points/${point.id}`);
+
+      // Cập nhật State xóa điểm đó khỏi danh sách hiển thị lập tức
+      setPoints((prevPoints) => prevPoints.filter((p) => p.id !== point.id));
+
+      // Đồng bộ lại dữ liệu từ Server
       loadPoints();
     } catch (error) {
       alert(error.response?.data?.message || "Không thể khóa điểm");
@@ -179,9 +188,6 @@ export default function PatrolPoints() {
                   <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>
                     {t("point_management.area")}
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: "text.secondary" }}>
-                    {t("point_management.status")}
-                  </TableCell>
                   <TableCell
                     align="right"
                     sx={{ fontWeight: 700, color: "text.secondary" }}
@@ -218,16 +224,6 @@ export default function PatrolPoints() {
                       <Typography variant="body2" color="text.secondary">
                         {point.area || "—"}
                       </Typography>
-                    </TableCell>
-
-                    <TableCell>
-                      <Chip
-                        size="small"
-                        label={point.is_active ? "Hoạt động" : "Đã khóa"}
-                        color={point.is_active ? "success" : "default"}
-                        variant={point.is_active ? "filled" : "outlined"}
-                        sx={{ fontWeight: 700, borderRadius: 2 }}
-                      />
                     </TableCell>
 
                     <TableCell align="right">
@@ -297,6 +293,182 @@ export default function PatrolPoints() {
           </TableContainer>
         </CardContent>
       </Card>
+
+      {/* CARD SƠ ĐỒ MẶT BẰNG ĐÃ CĂN CHỈNH KHOẢNG CÁCH THẨM MỸ */}
+      <Card
+        elevation={0}
+        sx={{
+          width: "100%",
+          borderRadius: 2.5,
+          border: "1px solid",
+          borderColor: "divider",
+          mt: 3, // Khoảng cách giữa Bảng và Card sơ đồ
+          overflow: "hidden",
+        }}
+      >
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ p: 3 }}
+        >
+          <Box>
+            <Typography variant="h6" fontWeight={700} color="#0f172a">
+              {t("point_management.map_title")}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              {t("point_management.map_subtitle")}
+            </Typography>
+          </Box>
+        </Box>
+
+        <CardContent sx={{ px: 3 }}>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            sx={{ mb: 2.5 }}
+          >
+            <Box>
+              <Typography variant="h6" fontWeight={700} color="#0f172a">
+                Tầng 1
+              </Typography>
+              
+            </Box>
+          </Box>
+
+          <Box
+            sx={{
+              width: "100%",
+              borderRadius: 2,
+              overflow: "hidden",
+              border: "1px solid #e2e8f0",
+              bgcolor: "#f8fafc",
+              py: 2, 
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              cursor: "pointer",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": {
+                borderColor: "#3b82f6",
+                boxShadow: "0 4px 16px rgba(59, 130, 246, 0.1)",
+              },
+            }}
+          >
+            <Box
+              component="img"
+              src={patrolMapImg}
+              onClick={() => setSelectedMapImg(patrolMapImg)}
+              alt="Sơ đồ bảo vệ tuần tra"
+              sx={{
+                maxWidth: "100%",
+                maxHeight: 500,
+                width: "auto",
+                height: "auto",
+                display: "block",
+                objectFit: "contain",
+                borderRadius: 1,
+              }}
+            />
+          </Box>
+        </CardContent>
+
+        <CardContent sx={{ px: 3 }}>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            sx={{ mb: 2.5 }}
+          >
+            <Box>
+              <Typography variant="h6" fontWeight={700} color="#0f172a">
+                Tầng 2
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box
+            sx={{
+              width: "100%",
+              borderRadius: 2,
+              overflow: "hidden",
+              border: "1px solid #e2e8f0",
+              bgcolor: "#f8fafc",
+              py: 2,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              cursor: "pointer",
+              transition: "all 0.2s ease-in-out",
+              "&:hover": {
+                borderColor: "#3b82f6",
+                boxShadow: "0 4px 16px rgba(59, 130, 246, 0.1)",
+              },
+            }}
+          >
+            <Box
+              component="img"
+              src={patrolMapImg2}
+              onClick={() => setSelectedMapImg(patrolMapImg2)}
+              alt="Sơ đồ bảo vệ tuần tra"
+              sx={{
+                maxWidth: "100%",
+                maxHeight: 500,
+                width: "auto",
+                height: "auto",
+                display: "block",
+                objectFit: "contain",
+                borderRadius: 1,
+              }}
+            />
+          </Box>
+        </CardContent>
+      </Card>
+
+      {/* DIALOG POPUP PHÓNG TO SƠ ĐỒ KHI BẤM VÀO ẢNH */}
+      <Dialog
+        open={Boolean(selectedMapImg)}
+        onClose={() => setSelectedMapImg(null)}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            bgcolor: "#ffffff",
+            p: 1,
+            position: "relative",
+          },
+        }}
+      >
+        <IconButton
+          onClick={() => setSelectedMapImg(null)}
+          sx={{
+            position: "absolute",
+            top: 12,
+            right: 12,
+            bgcolor: "rgba(0,0,0,0.5)",
+            color: "#ffffff",
+            zIndex: 10,
+            "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
+          }}
+        >
+          <Close />
+        </IconButton>
+
+        <Box
+          component="img"
+          src={selectedMapImg}
+          alt="Sơ đồ phóng to"
+          sx={{
+            width: "100%",
+            height: "auto",
+            maxHeight: "85vh",
+            objectFit: "contain",
+            borderRadius: 2,
+          }}
+        />
+      </Dialog>
 
       <PointDialog
         open={openDialog}

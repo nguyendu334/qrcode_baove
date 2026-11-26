@@ -138,21 +138,21 @@ export default function Guards() {
                     bgcolor: (theme) => alpha(theme.palette.primary.main, 0.02),
                   }}
                 >
-                  <TableCell sx={{ fontWeight: 800, color: "#0f172a", py: 2 }}>
+                  <TableCell sx={{ fontWeight: 600, color: "#0f172a", py: 2 }}>
                     {t("guard_management.guard_code")}
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 800, color: "#0f172a" }}>
+                  <TableCell sx={{ fontWeight: 600, color: "#0f172a" }}>
                     {t("guard_management.full_name")}
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 800, color: "#0f172a" }}>
+                  <TableCell sx={{ fontWeight: 600, color: "#0f172a" }}>
                     {t("guard_management.phone")}
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 800, color: "#0f172a" }}>
+                  <TableCell sx={{ fontWeight: 600, color: "#0f172a" }}>
                     {t("guard_management.status")}
                   </TableCell>
                   <TableCell
                     align="right"
-                    sx={{ fontWeight: 800, color: "#0f172a" }}
+                    sx={{ fontWeight: 600, color: "#0f172a" }}
                   >
                     {t("guard_management.actions")}
                   </TableCell>
@@ -194,7 +194,7 @@ export default function Guards() {
                         <Chip
                           size="small"
                           label={
-                            guard.is_active !== false ? "Hoạt động" : "Đã khóa"
+                            guard.is_active !== false ? t("guard_management.online") : t("guard_management.offline")
                           }
                           sx={{
                             fontWeight: 700,

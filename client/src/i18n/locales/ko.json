@@ -5,7 +5,8 @@
     "point": "순찰 지점",
     "guard": "보안요원",
     "history": "순찰 이력",
-    "month": "월간 통계"
+    "month": "월간 통계",
+    "round": "순찰 회차"
   },
   "dashboard": {
     "title": "순찰 개요",
@@ -34,7 +35,11 @@
     "hourly_patrols": "시간대별 순찰 건수",
     "hourly_patrols_desc": "당일 확인 건수",
     "today_guards": "금일 근무 보안요원",
-    "scans_label": "확인 횟수"
+    "scans_label": "확인 횟수",
+    "not_in_patrol_time_title": "순찰 시간이 아닙니다",
+    "not_in_patrol_time_desc": "현재 설정된 순찰 교대 시간 영역이 아닙니다. 다음 순찰 교대가 시작되면 순찰 지점이 표시됩니다.",
+    "no_patrolled_points_in_round": "이번 순찰 회차에서 아직 순찰된 지점이 없습니다.",
+    "round": "회차"
   },
   "point_management": {
     "title": "순찰 지점",
@@ -44,7 +49,9 @@
     "point_name": "지점명",
     "area": "구역",
     "status": "상태",
-    "actions": "작업"
+    "actions": "작업",
+    "map_title": "순찰 지점 위치 지도",
+    "map_subtitle": "공장 순찰 경로 및 구역 분할 지도"
   },
   "guard_management": {
     "title": "보안요원 관리",
@@ -54,7 +61,8 @@
     "full_name": "성명",
     "phone": "전화번호",
     "status": "상태",
-    "actions": "작업"
+    "actions": "작업",
+    "online": "활성"
   },
   "patrol_history": {
     "title": "순찰 이력",
@@ -76,15 +84,35 @@
     "note": "비고",
     "round": "라운드",
     "status": "상태",
-    "device": "기기"
+    "device": "기기",
+    "picture": "사진",
+    "turn": "순찰 라운드",
+
+    "daily_incident_log": "일자별 사고 신고 내역",
+    "no_incidents_reported": "해당 일자에 등록된 사고가 없습니다",
+    "reported_guard": "신고 보안원",
+    "patrol_point": "순찰 지점",
+    "incident_details": "사고 상세 내용",
+    "contacted": "비상 연락 완료",
+    "images": "사진",
+    "other": "기타",
+    "none": "없음"
   },
   "monthly_stats": {
-    "title": "월간 통계",
-    "subtitle": "순찰 활동 종합",
+    "title": "순찰 및 사고 월간 보고서",
+    "subtitle": "월간 순찰 차수, 사고 목록 및 보고 대원 상세 통계",
     "total_patrols": "총 순찰 횟수",
-    "active_days": "순찰 실시 일수",
-    "daily_average": "일평균 횟수",
-    "daily_chart_title": "일별 순찰 횟수"
+    "active_days": "활동 일수",
+    "daily_average": "일평균",
+    "total_incidents": "총 감지된 사고",
+    "table_title": "일별 사고 상세 내역",
+    "export_excel": "엑셀 내보내기",
+    "patrol_date": "순찰 일자",
+    "patrol_rounds": "순찰 차수",
+    "reporting_guard": "사고 발견 대원",
+    "point_and_incidents": "순찰 지점 및 발생 사고",
+    "safe_status": "안전 (사고 없음)",
+    "note": "비고"
   },
   "patrol": {
     "patrol": "순찰",
@@ -92,6 +120,71 @@
     "guard_name": "보안요원 이름",
     "note_placeholder": "특이사항/이상 발생 시 메모를 입력하세요...",
     "confirm_patrol": "순찰 확인",
-    "confirm_success": "순찰 확인 완료"
+    "success_message": "순찰이 성공적으로 확인되었습니다!",
+    "error_message": "순찰을 확인 할 수 없습니다",
+    "select_guard": "보안요원 이름 선택",
+    "retake_photo": "사진 재촬영",
+    "take_photo_required": "현장 사진 촬영 (필수)",
+    "confirmed_status": "확인 완료",
+    "scene_photo": "현장 사진",
+    "unusual_incident_note": "특이사항 메모",
+    "camera_tap_hint": "탭하여 카메라이 열리고 사진이 자동 압축됩니다",
+    "gps_disabled": "GPS가 비활성화되어 있습니다",
+    "common_incidents": "주요 발생 사고",
+    "Rò rỉ nước / Khí thải": "누수 / 가스 유출",
+    "Nguy cơ cháy nổ / Khói": "화재 위험 / 연기",
+    "Cửa / Khóa hỏng": "문 / 잠금장치 파손",
+    "Đèn chiếu sáng hỏng": "조명 고장",
+    "Tài sản bị hỏng hóc": "자산 파손",
+    "Người lạ xuất hiện": "수상한 외부인 출현",
+    "Sự cố khác": "기타 사고",
+    "placeholder_other_description": "기타 사고 내용이 있을 경우 입력하세요",
+    "additional_photos": "사고 추가 현장 사진",
+    "btn_add_photo": "사진 추가",
+    "emergency_contact": "비상 연락망 (자체 처리 불가 시)",
+    "Ca ngày": "주간 근무",
+    "Ca đêm": "야간 근무",
+    "current_patrol_round": "현재 순찰 차수",
+    "next_patrol_round": "다음 순찰 차수",
+    "patrol_frequency": "순찰 주기",
+    "shift_frequency_desc": "주간: 2시간마다 1회 - 야간: 1시간마다 1회"
+  },
+  "round_management": {
+    "title": "교대 / 순찰 차수 관리",
+    "subtitle": "각 순찰 차수의 시작 시간, 종료 시간 및 활성 상태 설정",
+    "add_button": "순찰 차수 추가",
+    "id": "ID",
+    "round_name": "순찰 차수명",
+    "start_time": "시작 시간",
+    "end_time": "종료 시간",
+    "status": "상태",
+    "action": "작업",
+    "modal_add_title": "새 순찰 차수 추가",
+    "modal_edit_title": "순찰 차수 수정",
+    "cancel": "취소",
+    "save": "변경사항 저장",
+    "add": "추가",
+    "add_success": "새 순찰 차수가 성공적으로 추가되었습니다",
+    "update_success": "순찰 차수가 성공적으로 수정되었습니다",
+    "load_error": "순찰 차수 목록을 불러올 수 없습니다",
+    "action_error": "작업 실패",
+    "Vòng 1": "1차수",
+    "Vòng 2": "2차수",
+    "Vòng 3": "3차수",
+    "Vòng 4": "4차수",
+    "Vòng 5": "5차수",
+    "Vòng 6": "6차수",
+    "Vòng 7": "7차수",
+    "Vòng 8": "8차수",
+    "Vòng 9": "9차수",
+    "Vòng 10": "10차수",
+    "Vòng 11": "11차수",
+    "Vòng 12": "12차수",
+    "Vòng 13": "13차수",
+    "Vòng 14": "14차수",
+    "Vòng 15": "15차수",
+    "Vòng 16": "16차수",
+    "Vòng 17": "17차수",
+    "Vòng 18": "18차수"
   }
 }

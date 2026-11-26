@@ -18,6 +18,7 @@ exports.getPoints = async (req, res) => {
         created_at,
         updated_at
       FROM patrol_points
+      WHERE is_active = true
       ORDER BY point_code ASC
     `);
 

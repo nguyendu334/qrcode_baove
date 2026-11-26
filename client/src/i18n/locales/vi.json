@@ -5,7 +5,8 @@
     "point": "Điểm tuần tra",
     "guard": "Bảo vệ",
     "history": "Lịch sử tuần tra",
-    "month": "Thống kê tháng"
+    "month": "Thống kê tháng",
+    "round": "Vòng tuần tra"
   },
   "dashboard": {
     "title": "Tổng Quan Tuần Tra",
@@ -34,7 +35,11 @@
     "hourly_patrols": "Lượt tuần tra theo giờ",
     "hourly_patrols_desc": "Số lượt xác nhận trong ngày",
     "today_guards": "Bảo vệ hôm nay",
-    "scans_label": "Số lượt xác nhận"
+    "scans_label": "Số lượt xác nhận",
+    "not_in_patrol_time_title": "Chưa đến giờ tuần tra",
+    "not_in_patrol_time_desc": "Hiện tại không nằm trong khung giờ của ca tuần tra nào. Các điểm tuần tra sẽ xuất hiện khi ca tiếp theo bắt đầu.",
+    "no_patrolled_points_in_round": "Chưa có điểm nào được tuần tra trong vòng này.",
+    "round": "Vòng"
   },
   "point_management": {
     "title": "Điểm tuần tra",
@@ -44,7 +49,9 @@
     "point_name": "Tên điểm",
     "area": "Khu vực",
     "status": "Trạng thái",
-    "actions": "Thao tác"
+    "actions": "Thao tác",
+    "map_title": "Sơ đồ vị trí các điểm tuần tra",
+    "map_subtitle": "Bản đồ lộ trình và phân vùng các điểm tuần tra nhà máy"
   },
   "guard_management": {
     "title": "Quản lý bảo vệ",
@@ -54,7 +61,8 @@
     "full_name": "Họ tên",
     "phone": "Điện thoại",
     "status": "Trạng thái",
-    "actions": "Thao tác"
+    "actions": "Thao tác",
+    "online": "Hoạt động"
   },
   "patrol_history": {
     "title": "Lịch sử tuần tra",
@@ -76,15 +84,35 @@
     "note": "Ghi chú",
     "round": "Vòng",
     "status": "Trạng thái",
-    "device": "Thiết bị"
+    "device": "Thiết bị",
+    "picture": "Hình ảnh",
+    "turn": "Lượt tuần tra",
+
+    "daily_incident_log": "Danh sách sự cố ghi nhận theo ngày",
+    "no_incidents_reported": "Không có sự cố nào được ghi nhận trong ngày này",
+    "reported_guard": "Bảo vệ báo cáo",
+    "patrol_point": "Điểm tuần tra",
+    "incident_details": "Chi tiết sự cố ghi nhận",
+    "contacted": "Đã liên hệ",
+    "images": "Hình ảnh",
+    "other": "Khác",
+    "none": "Không có"
   },
   "monthly_stats": {
-    "title": "Thống kê theo tháng",
-    "subtitle": "Tổng hợp hoạt động tuần tra",
+    "title": "Báo cáo lượt tuần tra & Sự cố",
+    "subtitle": "Thống kê chi tiết lượt đi tuần, danh sách sự cố và bảo vệ ghi nhận trong tháng",
     "total_patrols": "Tổng lượt tuần tra",
-    "active_days": "Ngày có tuần tra",
-    "daily_average": "Trung bình / ngày",
-    "daily_chart_title": "Số lượt tuần tra từng ngày"
+    "active_days": "Số ngày hoạt động",
+    "daily_average": "Trung bình / Ngày",
+    "total_incidents": "Tổng sự cố phát hiện",
+    "table_title": "Bảng chi tiết sự cố theo ngày",
+    "export_excel": "Xuất Excel",
+    "patrol_date": "Ngày tuần tra",
+    "patrol_rounds": "Lượt",
+    "reporting_guard": "Bảo vệ phát hiện sự cố",
+    "point_and_incidents": "Điểm tuần tra & Sự cố gặp phải",
+    "safe_status": "An toàn (Không có sự cố)",
+    "note": "Ghi chú"
   },
   "patrol": {
     "patrol": "Tuần tra",
@@ -92,6 +120,72 @@
     "guard_name": "Tên bảo vệ",
     "note_placeholder": "Nhập ghi chú nếu có sự cố bất thường...",
     "confirm_patrol": "Xác nhận tuần tra",
-    "confirm_success": "Xác nhận tuần tra thành công"
+    "success_message": "Xác nhận tuần tra thành công!",
+    "error_message": "Không thể xác nhận tuần tra",
+    "select_guard": "Chọn tên bảo vệ",
+    "retake_photo": "Chụp lại ảnh",
+    "take_photo_required": "Chụp ảnh hiện trường (Bắt buộc)",
+    "confirmed_status": "Đã xác nhận thành công",
+    "scene_photo": "Ảnh hiện trường",
+    "unusual_incident_note": "Ghi chú bất thường",
+    "camera_tap_hint": "Chạm để mở Camera và nén ảnh tự động",
+    "gps_disabled": "GPS đang tắt",
+
+    "common_incidents": "Sự cố thường gặp",
+    "Rò rỉ nước / Khí thải": "Rò rỉ nước / Khí thải",
+    "Nguy cơ cháy nổ / Khói": "Nguy cơ cháy nổ / Khói",
+    "Cửa / Khóa hỏng": "Cửa / Khóa hỏng",
+    "Đèn chiếu sáng hỏng": "Đèn chiếu sáng hỏng",
+    "Tài sản bị hỏng hóc": "Tài sản bị hỏng hóc",
+    "Người lạ xuất hiện": "Người lạ xuất hiện",
+    "Sự cố khác": "Sự cố khác",
+    "placeholder_other_description": "Nhập thông tin sự cố khác nếu có",
+    "additional_photos": "Ảnh chi tiết sự cố bổ sung",
+    "btn_add_photo": "Thêm ảnh",
+    "emergency_contact": "Liên hệ khẩn cấp (Nếu không tự xử lý được)",
+    "Ca ngày": "Ca ngày",
+    "Ca đêm": "Ca đêm",
+    "current_patrol_round": "Vòng tuần tra hiện tại",
+    "next_patrol_round": "Vòng tuần tra tiếp theo",
+    "patrol_frequency": "Tần suất tuần tra",
+    "shift_frequency_desc": "Ca ngày: 2 giờ / lần - Ca đêm: 1 giờ / lần"
+  },
+  "round_management": {
+    "title": "Quản lý ca / vòng tuần tra",
+    "subtitle": "Cấu hình khung giờ bắt đầu, giờ kết thúc và trạng thái hoạt động của từng vòng",
+    "add_button": "Thêm vòng tuần tra",
+    "id": "ID",
+    "round_name": "Tên vòng tuần tra",
+    "start_time": "Giờ bắt đầu",
+    "end_time": "Giờ kết thúc",
+    "status": "Trạng thái",
+    "action": "Hành động",
+    "modal_add_title": "Thêm vòng tuần tra mới",
+    "modal_edit_title": "Chỉnh sửa vòng tuần tra",
+    "cancel": "Hủy",
+    "save": "Lưu thay đổi",
+    "add": "Thêm mới",
+    "add_success": "Thêm vòng tuần tra mới thành công",
+    "update_success": "Cập nhật vòng tuần tra thành công",
+    "load_error": "Không thể tải danh sách vòng tuần tra",
+    "action_error": "Thao tác thất bại",
+    "Vòng 1": "Vòng 1",
+    "Vòng 2": "Vòng 2",
+    "Vòng 3": "Vòng 3",
+    "Vòng 4": "Vòng 4",
+    "Vòng 5": "Vòng 5",
+    "Vòng 6": "Vòng 6",
+    "Vòng 7": "Vòng 7",
+    "Vòng 8": "Vòng 8",
+    "Vòng 9": "Vòng 9",
+    "Vòng 10": "Vòng 10",
+    "Vòng 11": "Vòng 11",
+    "Vòng 12": "Vòng 12",
+    "Vòng 13": "Vòng 13",
+    "Vòng 14": "Vòng 14",
+    "Vòng 15": "Vòng 15",
+    "Vòng 16": "Vòng 16",
+    "Vòng 17": "Vòng 17",
+    "Vòng 18": "Vòng 18"
   }
 }

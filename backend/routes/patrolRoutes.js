@@ -19,7 +19,14 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-router.post("/check", upload.single("photo"), controller.checkPatrol);
+router.post(
+  "/check",
+  upload.fields([
+    { name: "photo", maxCount: 1 }, // Ảnh chính bắt buộc
+    { name: "incident_photos", maxCount: 10 }, // Ảnh sự cố bổ sung (tối đa 10 ảnh)
+  ]),
+  controller.checkPatrol,
+);
 
 router.get("/history", controller.getHistory);
 

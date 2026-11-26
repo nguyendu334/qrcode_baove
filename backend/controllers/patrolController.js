@@ -10,9 +10,17 @@ exports.checkPatrol = async (req, res) => {
   const client = await pool.connect();
 
   // Hàm hỗ trợ dọn dẹp file ảnh nếu request thất bại hoặc bị hủy
-  const removeUploadedFile = () => {
-    if (req.file) {
-      const filePath = path.join(__dirname, "..", req.file.path);
+  const removeUploadedFiles = () => {
+    if (!req.files) return;
+
+    // Gom tất cả các file ảnh gửi lên (cả photo chính và incident_photos)
+    const allFiles = [];
+    if (req.files["photo"]) allFiles.push(...req.files["photo"]);
+    if (req.files["incident_photos"])
+      allFiles.push(...req.files["incident_photos"]);
+
+    allFiles.forEach((file) => {
+      const filePath = path.join(__dirname, "..", file.path);
       if (fs.existsSync(filePath)) {
         try {
           fs.unlinkSync(filePath);
@@ -20,17 +28,29 @@ exports.checkPatrol = async (req, res) => {
           console.error("Lỗi khi xóa file ảnh rác:", err);
         }
       }
-    }
+    });
   };
 
   try {
-    const { guard_id, patrol_point_id, note } = req.body;
+    const {
+      guard_id,
+      patrol_point_id,
+      incidents,
+      other_description,
+      emergency_contacted,
+      emergency_phone,
+      called_at,
+    } = req.body;
 
-    // Lấy đường dẫn tĩnh phục vụ lưu trữ CSDL
-    const photo_url = req.file ? `/uploads/${req.file.filename}` : null;
+    // Lấy đường dẫn tĩnh của ảnh chính bắt buộc
+    const mainPhotoFile =
+      req.files && req.files["photo"] ? req.files["photo"][0] : null;
+    const photo_url = mainPhotoFile
+      ? `/uploads/${mainPhotoFile.filename}`
+      : null;
 
     if (!guard_id || !patrol_point_id) {
-      removeUploadedFile();
+      removeUploadedFiles();
       return res.status(400).json({
         success: false,
         message: "Thiếu thông tin bảo vệ hoặc điểm tuần tra",
@@ -71,20 +91,16 @@ exports.checkPatrol = async (req, res) => {
      */
     const guardResult = await client.query(
       `
-        SELECT
-          id,
-          guard_code,
-          full_name
+        SELECT id, guard_code, full_name
         FROM guards
-        WHERE id = $1
-          AND is_active = TRUE
+        WHERE id = $1 AND is_active = TRUE
       `,
       [guard_id],
     );
 
     if (guardResult.rows.length === 0) {
       await client.query("ROLLBACK");
-      removeUploadedFile();
+      removeUploadedFiles();
       return res.status(404).json({
         success: false,
         message: "Bảo vệ không tồn tại hoặc đã bị khóa",
@@ -98,21 +114,16 @@ exports.checkPatrol = async (req, res) => {
      */
     const pointResult = await client.query(
       `
-        SELECT
-          id,
-          point_code,
-          point_name,
-          area
+        SELECT id, point_code, point_name, area
         FROM patrol_points
-        WHERE id = $1
-          AND is_active = TRUE
+        WHERE id = $1 AND is_active = TRUE
       `,
       [patrol_point_id],
     );
 
     if (pointResult.rows.length === 0) {
       await client.query("ROLLBACK");
-      removeUploadedFile();
+      removeUploadedFiles();
       return res.status(404).json({
         success: false,
         message: "Điểm tuần tra không tồn tại",
@@ -125,11 +136,7 @@ exports.checkPatrol = async (req, res) => {
      * =====================================================
      */
     const roundResult = await client.query(`
-      SELECT
-        id,
-        round_name,
-        start_time,
-        end_time
+      SELECT id, round_name, start_time, end_time
       FROM patrol_rounds
       WHERE is_active = TRUE
         AND CURRENT_TIME >= start_time
@@ -140,7 +147,7 @@ exports.checkPatrol = async (req, res) => {
 
     if (roundResult.rows.length === 0) {
       await client.query("ROLLBACK");
-      removeUploadedFile();
+      removeUploadedFiles();
       return res.status(400).json({
         success: false,
         message: "Hiện tại không nằm trong thời gian tuần tra",
@@ -157,20 +164,13 @@ exports.checkPatrol = async (req, res) => {
     const duplicateResult = await client.query(
       `
         SELECT
-          pl.id,
-          pl.checked_at,
-          pl.guard_id,
-          g.guard_code,
-          g.full_name AS guard_name
+          pl.id, pl.checked_at, pl.guard_id,
+          g.guard_code, g.full_name AS guard_name
         FROM patrol_logs pl
-
-        INNER JOIN guards g
-          ON g.id = pl.guard_id
-
+        INNER JOIN guards g ON g.id = pl.guard_id
         WHERE pl.patrol_point_id = $1
           AND pl.round_id = $2
           AND pl.checked_at::date = CURRENT_DATE
-
         LIMIT 1
       `,
       [patrol_point_id, round.id],
@@ -178,10 +178,9 @@ exports.checkPatrol = async (req, res) => {
 
     if (duplicateResult.rows.length > 0) {
       await client.query("ROLLBACK");
-      removeUploadedFile(); // Xóa ảnh rác lập tức khi phát hiện bị trùng lượt check
+      removeUploadedFiles();
 
       const existing = duplicateResult.rows[0];
-
       return res.status(409).json({
         success: false,
         message: "Điểm này đã được xác nhận trong vòng tuần tra hiện tại",
@@ -189,7 +188,7 @@ exports.checkPatrol = async (req, res) => {
           checked_at: existing.checked_at,
           guard_id: existing.guard_id,
           guard_code: existing.guard_code,
-          guard_name: existing.guard_name,
+          guard_name: existing.full_name,
           round_name: round.round_name,
         },
       });
@@ -197,58 +196,98 @@ exports.checkPatrol = async (req, res) => {
 
     /*
      * =====================================================
-     * 5. GHI NHẬN TUẦN TRA (NẾU HỢP LỆ MỚI GIỮ ẢNH)
+     * 5. GHI NHẬN TUẦN TRA (PATROL LOGS)
      * =====================================================
      */
     const insertResult = await client.query(
       `
         INSERT INTO patrol_logs
         (
-          guard_id,
-          patrol_point_id,
-          round_id,
-          checked_at,
-          device_info,
-          ip_address,
-          note,
-          photo_url
+          guard_id, patrol_point_id, round_id,
+          checked_at, device_info, ip_address, photo_url
         )
-        VALUES
-        (
-          $1,
-          $2,
-          $3,
-          CURRENT_TIMESTAMP,
-          $4,
-          $5,
-          $6,
-          $7
-        )
+        VALUES ($1, $2, $3, CURRENT_TIMESTAMP, $4, $5, $6)
         RETURNING *
       `,
-      [
-        guard_id,
-        patrol_point_id,
-        round.id,
-        deviceInfo,
-        ipAddress,
-        note?.trim() || null,
-        photo_url,
-      ],
+      [guard_id, patrol_point_id, round.id, deviceInfo, ipAddress, photo_url],
     );
+
+    const createdLog = insertResult.rows[0];
+
+    /*
+     * =====================================================
+     * 6. LƯU BẢNG SỰ CỐ (PATROL INCIDENTS) - NẾU CÓ SỰ CỐ
+     * =====================================================
+     */
+    // Tập hợp danh sách đường dẫn ảnh sự cố bổ sung
+    const incidentPhotos =
+      req.files && req.files["incident_photos"]
+        ? req.files["incident_photos"]
+        : [];
+    const incidentPhotoUrls = incidentPhotos.map(
+      (file) => `/uploads/${file.filename}`,
+    );
+
+    // Parse mảng sự cố từ JSON chuỗi
+    let parsedIncidents = [];
+    if (incidents) {
+      try {
+        parsedIncidents =
+          typeof incidents === "string" ? JSON.parse(incidents) : incidents;
+      } catch (e) {
+        parsedIncidents = [];
+      }
+    }
+
+    // Điều kiện: Tạo bản ghi sự cố nếu chọn checkbox / có nội dung khác / có ảnh sự cố / có gọi SOS
+    const hasIncidentData =
+      parsedIncidents.length > 0 ||
+      (other_description && other_description.trim()) ||
+      incidentPhotoUrls.length > 0 ||
+      emergency_contacted;
+
+    let createdIncident = null;
+
+    if (hasIncidentData) {
+      const incidentInsertResult = await client.query(
+        `
+          INSERT INTO patrol_incidents
+          (
+            patrol_log_id, guard_id, patrol_point_id,
+            incidents, other_description, photo_urls,
+            emergency_contacted, emergency_phone, called_at
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          RETURNING *
+        `,
+        [
+          createdLog.id,
+          guard_id,
+          patrol_point_id,
+          parsedIncidents,
+          other_description?.trim() || null,
+          incidentPhotoUrls,
+          emergency_contacted || null,
+          emergency_phone || null,
+          called_at || null,
+        ],
+      );
+      createdIncident = incidentInsertResult.rows[0];
+    }
 
     await client.query("COMMIT");
 
     /*
      * =====================================================
-     * 6. RESPONSE
+     * 7. RESPONSE
      * =====================================================
      */
     res.json({
       success: true,
       message: "Xác nhận tuần tra thành công",
       data: {
-        log: insertResult.rows[0],
+        log: createdLog,
+        incident: createdIncident,
         guard: guardResult.rows[0],
         point: pointResult.rows[0],
         round,
@@ -258,7 +297,7 @@ exports.checkPatrol = async (req, res) => {
     });
   } catch (error) {
     await client.query("ROLLBACK");
-    removeUploadedFile(); // Xóa ảnh rác nếu gặp sự cố hệ thống/CSDL
+    removeUploadedFiles();
 
     console.error("checkPatrol error:", error);
 
@@ -295,7 +334,6 @@ exports.getHistory = async (req, res) => {
      * DATE
      * =====================================================
      */
-
     if (date) {
       conditions.push(`
         pl.checked_at >= $${index}::date
@@ -311,7 +349,6 @@ exports.getHistory = async (req, res) => {
      * GUARD
      * =====================================================
      */
-
     if (guard_id) {
       conditions.push(`pl.guard_id = $${index}`);
 
@@ -324,7 +361,6 @@ exports.getHistory = async (req, res) => {
      * POINT
      * =====================================================
      */
-
     if (point_id) {
       conditions.push(`pl.patrol_point_id = $${index}`);
 
@@ -337,7 +373,6 @@ exports.getHistory = async (req, res) => {
      * SEARCH
      * =====================================================
      */
-
     if (search) {
       conditions.push(`
         (
@@ -358,16 +393,14 @@ exports.getHistory = async (req, res) => {
      * WHERE
      * =====================================================
      */
-
     const whereClause =
       conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
     /*
      * =====================================================
-     * QUERY
+     * QUERY (ĐÃ KẾT HỢP BẢNG PATROL_INCIDENTS)
      * =====================================================
      */
-
     const query = `
       SELECT
         pl.id,
@@ -384,13 +417,21 @@ exports.getHistory = async (req, res) => {
 
         pl.device_info,
         pl.ip_address,
-        pl.note,
         pl.photo_url,
 
         pr.id AS round_id,
         pr.round_name,
         pr.start_time,
-        pr.end_time
+        pr.end_time,
+
+        -- Bổ sung các cột thông tin từ bảng patrol_incidents
+        pi.id AS incident_id,
+        pi.incidents,
+        pi.other_description,
+        pi.photo_urls AS incident_photos,
+        pi.emergency_contacted,
+        pi.emergency_phone,
+        pi.called_at AS emergency_called_at
 
       FROM patrol_logs pl
 
@@ -403,6 +444,10 @@ exports.getHistory = async (req, res) => {
       LEFT JOIN patrol_rounds pr
         ON pr.id = pl.round_id
 
+      -- Kết hợp bảng sự cố theo patrol_log_id
+      LEFT JOIN patrol_incidents pi
+        ON pi.patrol_log_id = pl.id
+
       ${whereClause}
 
       ORDER BY pl.checked_at DESC
@@ -412,9 +457,19 @@ exports.getHistory = async (req, res) => {
 
     const result = await pool.query(query, values);
 
+    // Tách riêng danh sách lượt có sự cố để Frontend hiển thị lên bảng sự cố phía trên
+    const incidentsOnly = result.rows.filter(
+      (row) =>
+        row.incident_id ||
+        (row.incidents && row.incidents.length > 0) ||
+        row.other_description ||
+        row.emergency_contacted,
+    );
+
     res.json({
       success: true,
-      data: result.rows,
+      data: result.rows, // Toàn bộ lượt tuần tra (dùng cho bảng dưới)
+      incidents: incidentsOnly, // Chỉ các lượt CÓ SỰ CỐ (dùng cho bảng trên)
       total: result.rows.length,
     });
   } catch (error) {
@@ -434,109 +489,81 @@ exports.getHistory = async (req, res) => {
 // =====================================================
 exports.getMonthlyHistory = async (req, res) => {
   try {
-    const { month } = req.query;
+    const { month } = req.query; // Dạng 'YYYY-MM', ví dụ '2026-09'
 
     if (!month) {
       return res.status(400).json({
         success: false,
-        message: "Thiếu tháng",
+        message: "Thiếu tham số tháng",
       });
     }
 
+    const startDate = `${month}-01`;
+
     const result = await pool.query(
       `
-        WITH days AS
-        (
-          SELECT
-            generate_series(
-              $1::date,
-              (
-                $1::date
-                + INTERVAL '1 month'
-                - INTERVAL '1 day'
-              )::date,
-              INTERVAL '1 day'
-            )::date AS patrol_date
-        ),
-
-        daily AS
-        (
-          SELECT
-
-            DATE(pl.checked_at)
-              AS patrol_date,
-
-            COUNT(pl.id)
-              AS total_checks,
-
-            COUNT(
-              DISTINCT pl.guard_id
-            ) AS total_guards,
-
-            COUNT(
-              DISTINCT pl.patrol_point_id
-            ) AS total_points
-
-          FROM patrol_logs pl
-
-          WHERE
-
-            pl.checked_at >= $1::date
-
-            AND
-
-            pl.checked_at <
-            (
-              $1::date
-              + INTERVAL '1 month'
-            )
-
-          GROUP BY
-            DATE(pl.checked_at)
-        )
-
+      WITH days AS (
+        SELECT 
+          generate_series(
+            $1::date, 
+            ($1::date + INTERVAL '1 month' - INTERVAL '1 day')::date, 
+            INTERVAL '1 day'
+          )::date AS patrol_date
+      ),
+      daily AS (
         SELECT
+          DATE(pl.checked_at) AS patrol_date,
+          COUNT(DISTINCT pl.id) AS total_checks,
+          COUNT(DISTINCT pl.guard_id) AS total_guards,
+          COUNT(DISTINCT pl.patrol_point_id) AS total_points,
+          
+          -- Đếm số sự cố từ bảng patrol_incidents
+          COUNT(DISTINCT pi.id) AS total_incidents,
+          
+          -- Danh sách tên bảo vệ ghi nhận sự cố trong ngày
+          STRING_AGG(DISTINCT g.full_name, ', ') FILTER (WHERE pi.id IS NOT NULL) AS incident_guards,
+          
+          -- Gom nhóm chi tiết Điểm tuần tra, Danh sách mảng sự cố (incidents) & Mô tả khác (other_description)
+          JSON_AGG(
+            DISTINCT JSONB_BUILD_OBJECT(
+              'point_code', pp.point_code,
+              'point_name', pp.point_name,
+              'incidents', pi.incidents,
+              'other_description', pi.other_description
+            )
+          ) FILTER (WHERE pi.id IS NOT NULL) AS incident_points
 
-          days.patrol_date,
-
-          COALESCE(
-            daily.total_checks,
-            0
-          ) AS total_checks,
-
-          COALESCE(
-            daily.total_guards,
-            0
-          ) AS total_guards,
-
-          COALESCE(
-            daily.total_points,
-            0
-          ) AS total_points
-
-        FROM days
-
-        LEFT JOIN daily
-          ON daily.patrol_date =
-             days.patrol_date
-
-        ORDER BY
-          days.patrol_date
-        `,
-      [`${month}-01`],
+        FROM patrol_logs pl
+        LEFT JOIN patrol_incidents pi ON pl.id = pi.patrol_log_id
+        LEFT JOIN guards g ON COALESCE(pi.guard_id, pl.guard_id) = g.id
+        LEFT JOIN patrol_points pp ON COALESCE(pi.patrol_point_id, pl.patrol_point_id) = pp.id
+        WHERE pl.checked_at >= $1::date 
+          AND pl.checked_at < ($1::date + INTERVAL '1 month')
+        GROUP BY DATE(pl.checked_at)
+      )
+      SELECT
+        days.patrol_date,
+        COALESCE(daily.total_checks, 0) AS total_checks,
+        COALESCE(daily.total_guards, 0) AS total_guards,
+        COALESCE(daily.total_points, 0) AS total_points,
+        COALESCE(daily.total_incidents, 0) AS total_incidents,
+        COALESCE(daily.incident_guards, '') AS incident_guards,
+        COALESCE(daily.incident_points, '[]'::json) AS incident_points
+      FROM days
+      LEFT JOIN daily ON daily.patrol_date = days.patrol_date
+      ORDER BY days.patrol_date ASC;
+      `,
+      [startDate],
     );
 
     res.json({
       success: true,
-
       data: result.rows,
     });
   } catch (error) {
-    console.error("getMonthlyHistory:", error);
-
+    console.error("getMonthlyHistory error:", error);
     res.status(500).json({
       success: false,
-
       message: "Không thể lấy thống kê tháng",
     });
   }
@@ -554,10 +581,8 @@ exports.getDashboard = async (req, res) => {
      * 1. THÔNG TIN TỔNG QUAN
      * =====================================================
      */
-
     const summaryResult = await pool.query(`
       SELECT
-
         (
           SELECT COUNT(*)
           FROM patrol_points
@@ -578,11 +603,8 @@ exports.getDashboard = async (req, res) => {
     `);
 
     const summary = summaryResult.rows[0];
-
     const totalPoints = Number(summary.total_points) || 0;
-
     const totalGuards = Number(summary.total_guards) || 0;
-
     const todayChecks = Number(summary.today_checks) || 0;
 
     /*
@@ -590,26 +612,20 @@ exports.getDashboard = async (req, res) => {
      * 2. XÁC ĐỊNH VÒNG TUẦN TRA HIỆN TẠI
      * =====================================================
      */
-
     const roundResult = await pool.query(`
       SELECT
         id,
         round_name,
         start_time,
         end_time
-
       FROM patrol_rounds
-
       WHERE is_active = TRUE
-
         AND (
           (
             start_time <= end_time
             AND CURRENT_TIME BETWEEN start_time AND end_time
           )
-
           OR
-
           (
             start_time > end_time
             AND (
@@ -618,9 +634,7 @@ exports.getDashboard = async (req, res) => {
             )
           )
         )
-
       ORDER BY start_time
-
       LIMIT 1
     `);
 
@@ -628,131 +642,67 @@ exports.getDashboard = async (req, res) => {
 
     /*
      * =====================================================
-     * 3. TRẠNG THÁI CÁC ĐIỂM
+     * 3. TRẠNG THÁI CÁC ĐIỂM (ĐÃ SỬA CHUẨN LOGIC)
      *
-     * Nếu đang trong vòng:
-     * -> kiểm tra theo round_id
-     *
-     * Nếu không có vòng:
-     * -> kiểm tra theo ngày
+     * - Nếu ĐANG TRONG VÒNG: Lấy dữ liệu đã check của vòng đó trong ngày.
+     * - Nếu NGOÀI VÒNG (currentRound = null): Đánh dấu TẤT CẢ các điểm là chưa check (FALSE).
      * =====================================================
      */
-
     let pointsQuery;
     let pointsParams = [];
 
     if (currentRound) {
+      // Đang trong giờ tuần tra -> Check theo round_id của vòng hiện tại
       pointsQuery = `
         SELECT
           pp.id,
           pp.point_code,
           pp.point_name,
           pp.area,
-
           pl.checked_at,
-
           g.full_name AS guard_name,
           g.guard_code,
-
           CASE
-            WHEN pl.id IS NOT NULL
-            THEN TRUE
+            WHEN pl.id IS NOT NULL THEN TRUE
             ELSE FALSE
           END AS checked
-
         FROM patrol_points pp
-
         LEFT JOIN LATERAL (
-
           SELECT
             pl.id,
             pl.checked_at,
             pl.guard_id
-
           FROM patrol_logs pl
-
-          WHERE
-            pl.patrol_point_id = pp.id
-
+          WHERE pl.patrol_point_id = pp.id
             AND pl.round_id = $1
-
-            AND pl.checked_at::date =
-                CURRENT_DATE
-
-          ORDER BY
-            pl.checked_at DESC
-
+            AND pl.checked_at::date = CURRENT_DATE
+          ORDER BY pl.checked_at DESC
           LIMIT 1
-
         ) pl ON TRUE
-
-        LEFT JOIN guards g
-          ON g.id = pl.guard_id
-
-        WHERE
-          pp.is_active = TRUE
-
-        ORDER BY
-          pp.point_code
+        LEFT JOIN guards g ON g.id = pl.guard_id
+        WHERE pp.is_active = TRUE
+        ORDER BY pp.point_code
       `;
-
       pointsParams = [currentRound.id];
     } else {
+      // Ngoài giờ tuần tra -> Không nối với patrol_logs, ép toàn bộ điểm về FALSE
       pointsQuery = `
         SELECT
           pp.id,
           pp.point_code,
           pp.point_name,
           pp.area,
-
-          pl.checked_at,
-
-          g.full_name AS guard_name,
-          g.guard_code,
-
-          CASE
-            WHEN pl.id IS NOT NULL
-            THEN TRUE
-            ELSE FALSE
-          END AS checked
-
+          NULL AS checked_at,
+          NULL AS guard_name,
+          NULL AS guard_code,
+          FALSE AS checked
         FROM patrol_points pp
-
-        LEFT JOIN LATERAL (
-
-          SELECT
-            pl.id,
-            pl.checked_at,
-            pl.guard_id
-
-          FROM patrol_logs pl
-
-          WHERE
-            pl.patrol_point_id = pp.id
-
-            AND pl.checked_at::date =
-                CURRENT_DATE
-
-          ORDER BY
-            pl.checked_at DESC
-
-          LIMIT 1
-
-        ) pl ON TRUE
-
-        LEFT JOIN guards g
-          ON g.id = pl.guard_id
-
-        WHERE
-          pp.is_active = TRUE
-
-        ORDER BY
-          pp.point_code
+        WHERE pp.is_active = TRUE
+        ORDER BY pp.point_code
       `;
     }
 
     const pointsResult = await pool.query(pointsQuery, pointsParams);
-
     const points = pointsResult.rows;
 
     /*
@@ -760,7 +710,6 @@ exports.getDashboard = async (req, res) => {
      * 4. TỶ LỆ HOÀN THÀNH
      * =====================================================
      */
-
     const completedPoints = points.filter((point) => point.checked).length;
 
     const completionRate =
@@ -773,113 +722,60 @@ exports.getDashboard = async (req, res) => {
      * 5. THỐNG KÊ THEO GIỜ
      * =====================================================
      */
-
     const hourlyResult = await pool.query(`
-        SELECT
-
-          EXTRACT(
-            HOUR FROM checked_at
-          )::integer AS hour,
-
-          COUNT(*)::integer AS total
-
-        FROM patrol_logs
-
-        WHERE
-          checked_at::date =
-          CURRENT_DATE
-
-        GROUP BY
-          EXTRACT(
-            HOUR FROM checked_at
-          )
-
-        ORDER BY
-          hour
-      `);
+      SELECT
+        EXTRACT(HOUR FROM checked_at)::integer AS hour,
+        COUNT(*)::integer AS total
+      FROM patrol_logs
+      WHERE checked_at::date = CURRENT_DATE
+      GROUP BY EXTRACT(HOUR FROM checked_at)
+      ORDER BY hour
+    `);
 
     /*
      * =====================================================
      * 6. THỐNG KÊ BẢO VỆ
      * =====================================================
      */
-
     const guardsResult = await pool.query(`
-        SELECT
-
-          g.id,
-          g.guard_code,
-          g.full_name,
-
-          COUNT(pl.id)::integer
-            AS total_checks,
-
-          MAX(pl.checked_at)
-            AS last_checked_at
-
-        FROM guards g
-
-        LEFT JOIN patrol_logs pl
-          ON pl.guard_id = g.id
-
-          AND pl.checked_at::date =
-              CURRENT_DATE
-
-        WHERE
-          g.is_active = TRUE
-
-        GROUP BY
-          g.id,
-          g.guard_code,
-          g.full_name
-
-        ORDER BY
-          total_checks DESC,
-          g.full_name
-      `);
+      SELECT
+        g.id,
+        g.guard_code,
+        g.full_name,
+        COUNT(pl.id)::integer AS total_checks,
+        MAX(pl.checked_at) AS last_checked_at
+      FROM guards g
+      LEFT JOIN patrol_logs pl
+        ON pl.guard_id = g.id
+        AND pl.checked_at::date = CURRENT_DATE
+      WHERE g.is_active = TRUE
+      GROUP BY g.id, g.guard_code, g.full_name
+      ORDER BY total_checks DESC, g.full_name
+    `);
 
     /*
      * =====================================================
      * 7. TIẾN ĐỘ THEO VÒNG
      * =====================================================
      */
-
     const roundsResult = await pool.query(`
-        SELECT
-
-          pr.id,
-          pr.round_name,
-          pr.start_time,
-          pr.end_time,
-
-          COUNT(
-            DISTINCT pl.patrol_point_id
-          )::integer AS completed_points
-
-        FROM patrol_rounds pr
-
-        LEFT JOIN patrol_logs pl
-          ON pl.round_id = pr.id
-
-          AND pl.checked_at::date =
-              CURRENT_DATE
-
-        WHERE
-          pr.is_active = TRUE
-
-        GROUP BY
-          pr.id,
-          pr.round_name,
-          pr.start_time,
-          pr.end_time
-
-        ORDER BY
-          pr.start_time
-      `);
+      SELECT
+        pr.id,
+        pr.round_name,
+        pr.start_time,
+        pr.end_time,
+        COUNT(DISTINCT pl.patrol_point_id)::integer AS completed_points
+      FROM patrol_rounds pr
+      LEFT JOIN patrol_logs pl
+        ON pl.round_id = pr.id
+        AND pl.checked_at::date = CURRENT_DATE
+      WHERE pr.is_active = TRUE
+      GROUP BY pr.id, pr.round_name, pr.start_time, pr.end_time
+      ORDER BY pr.start_time
+    `);
 
     const rounds = roundsResult.rows.map((round) => {
       const completed = Number(round.completed_points);
-
       const rate =
         totalPoints > 0
           ? Number((completed / totalPoints) * 100).toFixed(1)
@@ -887,9 +783,7 @@ exports.getDashboard = async (req, res) => {
 
       return {
         ...round,
-
         completed_points: completed,
-
         completion_rate: rate,
       };
     });
@@ -899,38 +793,25 @@ exports.getDashboard = async (req, res) => {
      * RESPONSE
      * =====================================================
      */
-
     res.json({
       success: true,
-
       data: {
         totalPoints,
-
         totalGuards,
-
         todayChecks,
-
         completedPoints,
-
         completionRate,
-
         currentRound,
-
         points,
-
         hourly: hourlyResult.rows,
-
         guards: guardsResult.rows,
-
         rounds,
       },
     });
   } catch (error) {
     console.error("getDashboard:", error);
-
     res.status(500).json({
       success: false,
-
       message: "Không thể lấy dữ liệu dashboard",
     });
   }
